@@ -1,184 +1,320 @@
-/* home.css — Catppuccin-inspired dark theme (minimal) */
+/* ==========================================================================
+   xLog — home.css (final tweaks)
+   - Catppuccin (Mocha) themed: green / rose / blue / teal / violet
+   - Glassy transparency, clearer card contrast, distinct left accent stripe
+   - Keeps all JavaFX class names used by your GuiApp
+   ========================================================================== */
 
-/* Font stack: prefer Inter / system-ui fallbacks */
-.root, .tasks-scroll, .task-row, .btn {
-    -fx-font-family: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui;
-    -fx-font-smoothing-type: lcd;
-  }
-  
-  /* Palette (mocha-like) */
-  :root {
-    -bg: #1e1e2e;       /* background */
-    -surface: #11111b;  /* surface / cards */
-    -muted: #bac2de;    /* muted text */
-    -text: #cad3f5;     /* main text */
-    -subtext: #94a1c2;  /* secondary text */
-    -accent: #89b4fa;   /* accent */
-    -peach: #f5c2e7;    /* peach/mauve for type badges */
-    -green: #a6e3a1;    /* success */
-    -yellow: #f9e2af;   /* accent alt */
-    -glass: rgba(255,255,255,0.03);
-    -radius: 10px;
-    -card-pad: 12px;
-  }
-  
-  /* App background & root */
-  .root {
-    -fx-background-color: linear-gradient(to bottom right, rgba(20,20,30,1), rgba(15,15,22,1));
-    -fx-padding: 14px;
-  }
-  
-  /* Top title */
-  #home-title {
-    -fx-text-fill: var(-text);
-    -fx-font-size: 18px;
-    -fx-font-weight: 700;
-    -fx-letter-spacing: 0.2px;
-  }
-  
-  /* Buttons base */
-  .btn {
-    -fx-background-radius: 8px;
-    -fx-padding: 8px 12px;
-    -fx-cursor: hand;
-    -fx-font-weight: 600;
-    -fx-border-width: 0;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 6, 0, 0, 2);
-  }
-  
-  /* Primary / secondary */
-  .btn-primary {
-    -fx-background-color: linear-gradient(to bottom, rgba(137,180,250,0.12), rgba(137,180,250,0.06));
-    -fx-text-fill: var(-accent);
-  }
-  
-  .btn-secondary {
-    -fx-background-color: transparent;
-    -fx-border-color: rgba(255,255,255,0.04);
-    -fx-border-width: 1;
-    -fx-text-fill: var(-subtext);
-  }
-  
-  /* Complete button (prominent) */
-  .btn-complete {
-    -fx-background-color: linear-gradient(to bottom, rgba(166,227,161,0.12), rgba(166,227,161,0.06));
-    -fx-text-fill: var(-green);
-    -fx-font-weight: 700;
-    -fx-padding: 8px 14px;
-  }
-  
-  /* Tasks scroll */
-  .tasks-scroll {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-  }
-  
-  /* Task row (card-like) */
-  .task-row {
-    -fx-background-color: linear-gradient(to bottom, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    -fx-background-radius: var(-radius);
-    -fx-padding: 12px;
-    -fx-alignment: center-left;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 8, 0, 0, 2);
-    -fx-min-height: 56px;
-    -fx-max-width: 1000px;
-  }
-  
-  /* Hover */
-  .task-row:hover {
-    -fx-translate-y: -2px;
-    -fx-background-color: linear-gradient(to bottom, rgba(255,255,255,0.035), rgba(255,255,255,0.015));
-  }
-  
-  /* Domain label and dot */
-  .domain-dot {
-    -fx-background-radius: 6px;
-    -fx-min-width: 12px;
-    -fx-min-height: 12px;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 4, 0, 0, 1);
-  }
-  .domain-label {
-    -fx-text-fill: var(-subtext);
-    -fx-font-weight: 600;
-    -fx-font-size: 12px;
-  }
-  
-  /* Task text */
-  .task-name {
-    -fx-text-fill: var(-text);
-    -fx-font-size: 14px;
-    -fx-font-weight: 700;
-  }
-  .task-meta {
-    -fx-text-fill: var(-subtext);
-    -fx-font-size: 12px;
-    -fx-font-style: italic;
-  }
-  
-  /* Focus badge */
-  .focus-badge {
-    -fx-background-color: linear-gradient(to bottom, rgba(245,194,231,0.06), rgba(245,194,231,0.02));
-    -fx-text-fill: var(-peach);
-    -fx-padding: 3px 6px;
-    -fx-border-radius: 6px;
-    -fx-font-size: 11px;
-    -fx-font-weight: 700;
-  }
-  
-  /* Streak badge */
-  .streak-badge {
-    -fx-background-color: linear-gradient(to bottom, rgba(137,180,250,0.04), rgba(137,180,250,0.02));
-    -fx-text-fill: var(-accent);
-    -fx-padding: 3px 6px;
-    -fx-border-radius: 6px;
-    -fx-font-size: 12px;
-    -fx-font-weight: 700;
-  }
-  
-  /* Type badges (differentiate quick/session/grind) */
-  .type-badge {
-    -fx-padding: 6px 8px;
-    -fx-font-size: 11px;
-    -fx-font-weight: 800;
-    -fx-background-radius: 8px;
-    -fx-text-fill: white;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 4, 0, 0, 1);
-  }
-  
-  /* Color accents for types (subtle glass) */
-  .type-quick {
-    -fx-background-color: linear-gradient(to bottom, rgba(155,89,182,0.16), rgba(155,89,182,0.06));
-    -fx-text-fill: #f5c2e7;
-  }
-  .type-session {
-    -fx-background-color: linear-gradient(to bottom, rgba(250,177,120,0.12), rgba(250,177,120,0.04));
-    -fx-text-fill: #f5e0dc;
-  }
-  .type-grind {
-    -fx-background-color: linear-gradient(to bottom, rgba(150,255,198,0.08), rgba(150,255,198,0.03));
-    -fx-text-fill: #a6e3a1;
-  }
-  
-  /* None label (when no tasks) */
-  .none-label {
-    -fx-text-fill: var(-subtext);
-    -fx-font-size: 13px;
-    -fx-alignment: center;
-  }
-  
-  /* Small responsive tweaks */
-  @media screen and (max-width: 700px) {
-    .task-row { -fx-padding: 10px; -fx-min-height: 64px; -fx-spacing: 6px; }
-    .task-name { -fx-font-size: 13px; }
-    .domain-label { -fx-font-size: 11px; }
-  }
-  
-  /* Tooltips — subtle and legible */
-  .tooltip {
-    -fx-background-color: rgba(12,12,18,0.95);
-    -fx-text-fill: var(-text);
-    -fx-font-size: 12px;
-    -fx-padding: 8px;
-    -fx-border-radius: 6px;
-  }
-  
+/* Palette (mocha, minimal)
+   deep bg : #1e1e2e
+   panel    : #15161b
+   text     : #cdd6f4
+   subtext  : #9aa0c7
+   blue     : #89b4fa
+   teal     : #94e2d5
+   violet   : #b4befe
+   green    : #a6e3a1
+   rose     : #f38ba8
+   ======================================================================= */
+
+/* ---------- root / window ----------------------------------------------- */
+.root, .border-pane {
+  -fx-font-family: "JetBrains Mono", "JetBrainsMono Nerd Font", "Inter", "Segoe UI", monospace;
+  -fx-font-size: 13px;
+  -fx-background-color:
+    linear-gradient(to bottom right,
+      rgba(18,18,26,1) 0%,
+      rgba(28,28,38,1) 45%,
+      rgba(12,12,16,1) 100%);
+  -fx-text-fill: #cdd6f4;
+  -fx-padding: 12;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 20, 0.0, 0, 8);
+  -fx-font-smoothing-type: lcd;
+}
+
+/* Top area container inside BorderPane */
+.border-pane > .top {
+  -fx-padding: 10 14 10 14;
+  -fx-background-color: transparent;
+}
+
+/* Title */
+#home-title {
+  -fx-font-size: 18px;
+  -fx-font-weight: 800;
+  -fx-text-fill: #e6eef8;
+  -fx-effect: dropshadow(gaussian, rgba(6,8,12,0.5), 10, 0.0, 0, 4);
+  -fx-padding: 2 6 2 6;
+}
+
+/* Generic labels */
+.label { -fx-text-fill: #cdd6f4; -fx-font-weight: 600; }
+.label.small, .label.meta, .task-meta {
+  -fx-font-size: 11px;
+  -fx-font-weight: 500;
+  -fx-text-fill: #9aa0c7;
+}
+
+/* ---------- buttons ---------------------------------------------------- */
+.btn {
+  -fx-cursor: hand;
+  -fx-background-radius: 12;
+  -fx-padding: 8 12 8 12;
+  -fx-font-weight: 700;
+  -fx-font-size: 13px;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.28), 10, 0.0, 0, 6);
+  -fx-border-color: transparent;
+  -fx-translate-z: 0;
+  -fx-transition: all 160ms ease;
+  /* glassy backdrop */
+  -fx-background-insets: 0;
+}
+
+/* Primary: subtle glass with blue accent */
+.btn-primary {
+  -fx-background-color:
+    linear-gradient(from 0% 0% to 100% 100%, rgba(137,180,250,0.18) 0%, rgba(137,180,250,0.08) 55%),
+    linear-gradient(#2d354a, #232633);
+  -fx-text-fill: #eaf3ff;
+  -fx-padding: 10 14 10 14;
+  -fx-border-radius: 12;
+  -fx-effect: dropshadow(gaussian, rgba(26,36,62,0.48), 10, 0.0, 0, 8);
+}
+
+/* Secondary: muted glass */
+.btn-secondary {
+  -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  -fx-text-fill: #cdd6f4;
+  -fx-border-color: rgba(255,255,255,0.04);
+  -fx-border-width: 1;
+  -fx-background-radius: 12;
+}
+
+/* Accent complete button (kept but uses Catppuccin blue -> violet gradient) */
+.btn-complete {
+  -fx-background-color:
+    linear-gradient(from 0% 0% to 100% 100%, rgba(137,180,250,0.92) 0%, rgba(180,190,254,0.84) 60%);
+  -fx-text-fill: #071026;
+  -fx-padding: 8 12 8 12;
+  -fx-background-radius: 11;
+  -fx-font-weight: 800;
+  -fx-effect: dropshadow(gaussian, rgba(7,10,22,0.2), 10, 0.0, 0, 6);
+}
+
+/* button interactions */
+.btn:hover { -fx-translate-y: -3; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.42), 16, 0.0, 0, 10); }
+.btn:pressed { -fx-translate-y: 0; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 6, 0.0, 0, 4); }
+.btn:disabled { -fx-opacity: 0.5; -fx-cursor: default; -fx-effect: none; }
+
+/* ---------- scroll / tasks area --------------------------------------- */
+/* ensure the scroll viewport is not white and has a subtle glass sheet */
+.scroll-pane.tasks-scroll {
+  -fx-background-color: transparent;
+  -fx-padding: 8;
+  -fx-border-color: transparent;
+}
+
+/* viewport (fixes white area) */
+.scroll-pane.tasks-scroll .viewport {
+  -fx-background-color: transparent;
+  -fx-padding: 6;
+  -fx-background-insets: 0;
+}
+
+/* tasks container */
+.vbox {
+  -fx-padding: 8;
+  -fx-spacing: 12;
+  -fx-background-color: transparent;
+}
+
+/* ---------- task card (more distinguishable) -------------------------- */
+/* card base: slightly lighter glass panel + subtle inner shadow for depth */
+.task-row {
+  -fx-background-color:
+    linear-gradient(to bottom right,
+      rgba(255,255,255,0.012) 0%,
+      rgba(0,0,0,0.06) 100%),
+    rgba(20,20,24,0.4);
+  -fx-background-insets: 0, 0;
+  -fx-background-radius: 14;
+  -fx-padding: 14 16 14 16;
+  -fx-spacing: 12;
+  -fx-alignment: center-left;
+  -fx-border-color: transparent;
+  -fx-border-width: 0 0 0 6;         /* left accent stripe space */
+  -fx-border-radius: 14;
+  -fx-effect:
+    dropshadow(gaussian, rgba(1,4,8,0.44), 18, 0.0, 0, 8),
+    innershadow(gaussian, rgba(0,0,0,0.35), 6, 0.0, 0, 1);
+  -fx-transition: all 200ms ease;
+}
+
+/* when hovered: lift and brighten slightly */
+.task-row:hover {
+  -fx-translate-y: -6;
+  -fx-effect:
+    dropshadow(gaussian, rgba(3,6,14,0.56), 34, 0.0, 0, 16),
+    innershadow(gaussian, rgba(0,0,0,0.22), 4, 0.0, 0, 1);
+  -fx-background-color:
+    linear-gradient(to bottom right,
+      rgba(137,180,250,0.02) 0%,
+      rgba(0,0,0,0.04) 100%),
+    rgba(26,26,32,0.54);
+}
+
+/* pressed */
+.task-row:pressed {
+  -fx-translate-y: 0;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 8, 0.0, 0, 6);
+}
+
+/* If your Java sets an inline -fx-border-color on the task-row it will be visible */
+.task-row[style*="-fx-border-color"] { -fx-border-style: solid; }
+
+/* make left accent stripe more vivid using nth-child fallback ordering
+   (this will apply when Java does not set an explicit border color) */
+.vbox > .task-row:nth-child(5n+1) { -fx-border-color: rgba(138,180,250,0.85); } /* blue */
+.vbox > .task-row:nth-child(5n+2) { -fx-border-color: rgba(166,227,161,0.9); } /* green */
+.vbox > .task-row:nth-child(5n+3) { -fx-border-color: rgba(180,190,254,0.88); } /* violet */
+.vbox > .task-row:nth-child(5n+4) { -fx-border-color: rgba(148,226,213,0.9); } /* teal */
+.vbox > .task-row:nth-child(5n+5) { -fx-border-color: rgba(243,139,168,0.92); } /* rose */
+
+/* left column (domain dot + label) */
+.domain-dot {
+  -fx-pref-width: 12;
+  -fx-pref-height: 12;
+  -fx-background-radius: 6;
+  -fx-border-color: rgba(0,0,0,0.28);
+  -fx-border-width: 1;
+  /* subtle glass fill for domain dot (if not set inline) */
+  -fx-background-color: linear-gradient(#2a3342, rgba(255,255,255,0.02));
+}
+
+/* domain label */
+.domain-label {
+  -fx-font-size: 13px;
+  -fx-font-weight: 700;
+  -fx-text-fill: #e6eef8;
+  -fx-min-width: 92;
+  -fx-opacity: 0.98;
+}
+
+/* title inside card */
+.task-name {
+  -fx-font-size: 14px;
+  -fx-font-weight: 800;
+  -fx-text-fill: #eaf2ff;
+  -fx-effect: dropshadow(gaussian, rgba(6,8,12,0.28), 6, 0.0, 0, 4);
+}
+
+/* meta text */
+.task-meta { -fx-font-size: 11px; -fx-text-fill: #9aa0c7; -fx-opacity: 0.95; }
+
+/* focus badge */
+.focus-badge {
+  -fx-background-color: linear-gradient(#f38ba8, #ea7aa8);
+  -fx-text-fill: #0f0a0e;
+  -fx-font-weight: 800;
+  -fx-padding: 4 8;
+  -fx-background-radius: 12;
+  -fx-font-size: 11px;
+}
+
+/* streak badge */
+.streak-badge {
+  -fx-background-color: linear-gradient(#a6e3a1, #79c389);
+  -fx-text-fill: #08140a;
+  -fx-font-weight: 800;
+  -fx-padding: 4 8;
+  -fx-background-radius: 12;
+  -fx-font-size: 11px;
+}
+
+/* type badge base */
+.type-badge {
+  -fx-padding: 6 10;
+  -fx-background-radius: 999;
+  -fx-font-weight: 900;
+  -fx-font-size: 12px;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 8, 0.0, 0, 4);
+}
+
+/* type-specific colors now aligned to mocha theme */
+.type-quick   { -fx-background-color: linear-gradient(#a6e3a1, #79c389); -fx-text-fill: #071014; } /* green */
+.type-session { -fx-background-color: linear-gradient(#89b4fa, #6fa8f2); -fx-text-fill: #071026; } /* blue */
+.type-grind   { -fx-background-color: linear-gradient(#b4befe, #8fa9ff); -fx-text-fill: #071026; } /* violet */
+
+/* ---------- make the "none" state subtle and readable ------------------ */
+.none-label, .label.no-tasks {
+  -fx-font-size: 15px;
+  -fx-text-fill: rgba(191,201,211,0.95);
+  -fx-alignment: center;
+  -fx-padding: 14;
+}
+
+/* ---------- form / inputs (create dialog) ------------------------------ */
+.text-field, .search-field {
+  -fx-background-color: rgba(255,255,255,0.02); /* glass */
+  -fx-background-radius: 10;
+  -fx-padding: 8 10;
+  -fx-border-color: rgba(255,255,255,0.04);
+  -fx-border-radius: 10;
+  -fx-text-fill: #cdd6f4;
+  -fx-prompt-text-fill: #6c6f85;
+  -fx-font-family: "JetBrains Mono", "Inter", monospace;
+  -fx-font-size: 13px;
+}
+.text-field:focused {
+  -fx-effect: dropshadow(gaussian, rgba(137,180,250,0.12), 10, 0.0, 0, 6);
+  -fx-border-color: rgba(137,180,250,0.18);
+}
+
+/* ---------- progress bar (profile) ------------------------------------ */
+.progress-bar {
+  -fx-accent: #89b4fa;
+  -fx-control-inner-background: rgba(255,255,255,0.03);
+  -fx-background-color: transparent;
+  -fx-background-radius: 8;
+  -fx-padding: 6;
+}
+.progress-bar .track { -fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 6; }
+.progress-bar .bar { -fx-background-color: linear-gradient(90deg, #89b4fa, #b4befe); -fx-background-radius: 6; }
+
+/* ---------- avatar / image -------------------------------------------- */
+.image-view {
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 12, 0.0, 0, 8);
+  -fx-background-radius: 10;
+}
+
+/* placeholder label border */
+.label[style*="-fx-border-color"] {
+  -fx-background-color: linear-gradient(#0f1116, #141418);
+  -fx-border-color: rgba(255,255,255,0.04);
+  -fx-border-radius: 8;
+}
+
+/* ---------- utilities -------------------------------------------------- */
+.hint { -fx-font-size: 11px; -fx-text-fill: #6c6f85; -fx-font-style: italic; }
+.count-badge { -fx-background-color: linear-gradient(#89b4fa,#7aa2f7); -fx-background-radius: 999; -fx-text-fill: #071026; -fx-font-weight: 800; -fx-padding: 4 8; -fx-font-size: 11px; }
+
+/* elevation helpers */
+.elev-1 { -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 6, 0.0, 0, 3); }
+.elev-2 { -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.30), 12, 0.0, 0, 6); }
+
+/* focus outlines */
+.button:focused, .text-field:focused {
+  -fx-focus-color: rgba(137,180,250,0.28);
+  -fx-faint-focus-color: rgba(137,180,250,0.10);
+}
+
+/* small responsive tweaks */
+@media screen and (max-width: 760px) {
+  #home-title { -fx-font-size: 16px; }
+  .btn { -fx-font-size: 13px; -fx-padding: 8 10; }
+  .task-name { -fx-font-size: 13px; }
+  .task-row { -fx-padding: 10; }
+}
+
+/* End - cards more distinct, Catppuccin colors (green/rose/blue/teal/violet),
+   transparency and subtle inner shadow for readable, modern UI */
