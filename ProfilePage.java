@@ -584,6 +584,7 @@ public class ProfilePage {
         Scene scene = new Scene(root, 1000, 500);
         applyCss(scene, "profile.css");
         detailStage.setScene(scene);
+        detailStage.setMaximized(true);
         detailStage.showAndWait();
     }
     
