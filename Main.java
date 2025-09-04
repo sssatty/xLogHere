@@ -23,15 +23,14 @@ import javafx.scene.Node;
 public class Main {
   // --- DB ----------------------------------------------------------------
   private static Connection conn = null;
+  // Constants still needed by other parts of the application
   private static final double XP_MAX = 109500.0;
-
+  
   // ANSI styles (used by console functions - preserved)
   private static final String BOLD   = "\033[1m";
   private static final String ITALIC = "\033[3m";
   private static final String RESET  = "\033[0m";
   private static final String DIM    = "\033[90m";
-
-  // Rank labels and ANSI colors (console)
   private static final String[] RANK_NAMES = {
     "Rookie","Explorer","Crafter","Strategist",
     "Expert","Architect","Elite","Master","Legend"
@@ -40,9 +39,6 @@ public class Main {
     "\033[97m","\033[90m","\033[93m","\033[91m",
     "\033[92m","\033[94m","\033[95m","\033[31m","\033[30m"
   };
-
-  // GUI colors (hex) mapped to same rank indexes — used only in GUI
-  // NOTE: we will reuse these for domain coloring (first 4 domains will map to first 4 colors)
   private static final String[] GUI_COLORS = {
     "#505050", // neutral/rookie-ish
     "#7f8c8d",
@@ -54,8 +50,6 @@ public class Main {
     "#c0392b",
     "#000000"
   };
-
-  // Badge size (console badge)
   private static final int BADGE_H = 11;
   private static final int BADGE_W = BADGE_H * 2;
 
@@ -609,62 +603,10 @@ public class Main {
   }
 
   /**
-   * Existing console profile view - preserved exactly
+   * Console profile view - delegates to ProfilePage
    */
   private static void viewProfile() throws SQLException {
-    clearScreen();
-    String[] domainNames = {"","","",""};
-    double[] domainXps = new double[4];
-    try (PreparedStatement ps = conn.prepareStatement("SELECT id,name FROM domains ORDER BY id");
-         ResultSet rs = ps.executeQuery()) {
-      int idx = 0;
-      while (rs.next() && idx < 4) {
-        int id = rs.getInt(1);
-        domainNames[idx] = rs.getString(2);
-        try (PreparedStatement s2 = conn.prepareStatement("SELECT COALESCE(SUM(xp),0) FROM elements WHERE domain_id = ?")) {
-          s2.setInt(1, id);
-          try (ResultSet r2 = s2.executeQuery()) { if (r2.next()) domainXps[idx] = r2.getDouble(1); }
-        }
-        idx++;
-      }
-    }
-
-    double prod = 1.0;
-    for (double x : domainXps) prod *= x;
-    double profileXp = Math.pow(prod, 1.0/4.0);
-    double lvlF = Math.sqrt(profileXp / XP_MAX) * 8.0;
-    int lvl = Math.min(8, Math.max(0, (int)lvlF));
-    double frac = (lvl < 8 ? lvlF - lvl : 1.0);
-    String color = COLORS[lvl];
-    String rank = RANK_NAMES[lvl];
-
-    String user = "";
-    int daysLeft = 0;
-    try (PreparedStatement ps = conn.prepareStatement(
-      "SELECT name, CAST(julianday(date(created_at,'+4 years'))-julianday('now','localtime') AS INTEGER) FROM user WHERE id=1");
-         ResultSet rs = ps.executeQuery()) {
-      if (rs.next()) {
-        user = rs.getString(1);
-        daysLeft = rs.getInt(2);
-      }
-    }
-
-    List<String> badge = buildBadge(rank, color);
-    String[] info = new String[BADGE_H];
-    Arrays.fill(info, "");
-    info[0] = color + BOLD + rank + " " + ITALIC + user + RESET;
-    info[1] = DIM + "-".repeat(31) + RESET;
-    info[2] = "XP      : " + color + ((int)profileXp) + RESET;
-    info[3] = "Time    : " + daysLeft;
-    info[4] = BOLD + "Lvl:" + RESET + " " + buildProgressBar(frac, 20, color);
-    for (int i = 0; i < 4; ++i) info[6 + i] = padRight(domainNames[i], 12) + " : " + color + ((int)domainXps[i]) + RESET;
-
-    for (int y = 0; y < BADGE_H; ++y) {
-      String left = badge.get(y);
-      String right = info[y] == null ? "" : info[y];
-      System.out.println(left + "  " + right);
-    }
-    new Scanner(System.in).nextLine();
+    ProfilePage.viewProfile(conn);
   }
 
   private static void viewDomain(String choice) throws SQLException {
@@ -1499,7 +1441,6 @@ public class Main {
       Label elementsTitle = new Label("Elements");
       elementsTitle.getStyleClass().add("section-title");
       elementsHeader.getChildren().addAll(elementsIcon, elementsTitle);
-      //haha
       // Get elements for dropdowns
       List<String> elements = new ArrayList<>();
       try (PreparedStatement ps = conn.prepareStatement("SELECT name FROM elements ORDER BY name");
@@ -1757,156 +1698,10 @@ public class Main {
     }
 
     /**
-     * Profile GUI — mirrors the logic in viewProfile() but presents results in JavaFX.
-     * Does not change any core logic (same SQL and calculations).
+     * Profile GUI — delegates to ProfilePage
      */
     private void showProfileGui(Window owner) {
-      Stage d = new Stage();
-      d.initOwner(owner);
-      d.initModality(Modality.APPLICATION_MODAL);
-      d.setTitle("Profile");
-
-      // containers
-      BorderPane root = new BorderPane();
-      root.setPadding(new Insets(12));
-
-      VBox left = new VBox(8);
-      left.setAlignment(Pos.TOP_LEFT);
-
-      VBox right = new VBox(8);
-      right.setAlignment(Pos.TOP_CENTER);
-
-      HBox top = new HBox(12);
-      top.setAlignment(Pos.CENTER_LEFT);
-
-      // fetch same data as console viewProfile
-      String[] domainNames = {"","","",""};
-      double[] domainXps = new double[4];
-      String user = "";
-      int daysLeft = 0;
-      double profileXp = 0.0;
-      double frac = 0.0;
-      int lvl = 0;
-      String rank = "";
-      try {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT id,name FROM domains ORDER BY id");
-             ResultSet rs = ps.executeQuery()) {
-          int idx = 0;
-          while (rs.next() && idx < 4) {
-            int id = rs.getInt(1);
-            domainNames[idx] = rs.getString(2);
-            try (PreparedStatement s2 = conn.prepareStatement("SELECT COALESCE(SUM(xp),0) FROM elements WHERE domain_id = ?")) {
-              s2.setInt(1, id);
-              try (ResultSet r2 = s2.executeQuery()) { if (rs.next()) domainXps[idx] = r2.getDouble(1); }
-            }
-            idx++;
-          }
-        }
-
-        double prod = 1.0;
-        for (double x : domainXps) prod *= x;
-        profileXp = Math.pow(prod, 1.0/4.0);
-        double lvlF = Math.sqrt(profileXp / XP_MAX) * 8.0;
-        lvl = Math.min(8, Math.max(0, (int)lvlF));
-        frac = (lvl < 8 ? lvlF - lvl : 1.0);
-        rank = RANK_NAMES[lvl];
-
-        try (PreparedStatement ps = conn.prepareStatement(
-          "SELECT name, CAST(julianday(date(created_at,'+4 years'))-julianday('now','localtime') AS INTEGER) FROM user WHERE id=1");
-             ResultSet rs = ps.executeQuery()) {
-          if (rs.next()) {
-            user = rs.getString(1);
-            daysLeft = rs.getInt(2);
-          }
-        }
-      } catch (SQLException ex) {
-        ex.printStackTrace();
-      }
-
-      // left: rank name, username, xp and progress
-      Label rankLabel = new Label(rank);
-      rankLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-      rankLabel.setPadding(new Insets(0,0,4,0));
-      // apply GUI color if available
-      String hex = GUI_COLORS[Math.max(0, Math.min(GUI_COLORS.length-1, lvl))];
-      rankLabel.setStyle(rankLabel.getStyle() + "-fx-text-fill: " + hex + ";");
-
-      Label userLabel = new Label(user);
-      userLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #bfc9d3;");
-
-      Label xpLabel = new Label("XP: " + ((int)profileXp));
-      xpLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
-
-      Label timeLabel = new Label(daysLeft + " days left");
-      timeLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #9aa6b2;");
-
-      ProgressBar pb = new ProgressBar(frac);
-      pb.setPrefWidth(300);
-      Label pctLabel = new Label(String.format("%.0f%%", frac * 100.0));
-      HBox pbRow = new HBox(8, pb, pctLabel);
-      pbRow.setAlignment(Pos.CENTER_LEFT);
-
-      left.getChildren().addAll(rankLabel, userLabel, new Separator(), xpLabel, timeLabel, pbRow, new Separator());
-
-      // domain breakdown (list)
-      VBox domainsBox = new VBox(6);
-      for (int i = 0; i < 4; ++i) {
-        String dname = domainNames[i] == null ? "" : domainNames[i];
-        int dx = (int)domainXps[i];
-        HBox row = new HBox(8);
-        Label dn = new Label(dname);
-        dn.setPrefWidth(150);
-        dn.setStyle("-fx-font-weight: bold;");
-        Label v = new Label(String.valueOf(dx));
-        v.setStyle("-fx-text-fill: " + GUI_COLORS[Math.max(0, Math.min(GUI_COLORS.length-1, lvl))] + "; -fx-font-weight: bold;");
-        Region rgn = new Region();
-        HBox.setHgrow(rgn, Priority.ALWAYS);
-        row.getChildren().addAll(dn, rgn, v);
-        domainsBox.getChildren().add(row);
-      }
-      left.getChildren().add(domainsBox);
-
-      // right: avatar (if present) and some metadata
-      VBox meta = new VBox(6);
-      meta.setAlignment(Pos.TOP_CENTER);
-      // attempt to load avatar.png from current folder (optional)
-      try {
-        File f = new File("avatar.png");
-        if (f.exists()) {
-          Image img = new Image(new FileInputStream(f), 160, 160, true, true);
-          ImageView iv = new ImageView(img);
-          iv.setFitWidth(160);
-          iv.setFitHeight(160);
-          iv.setPreserveRatio(true);
-          meta.getChildren().add(iv);
-        } else {
-          // placeholder rectangle using a Label for minimal look
-          Label placeholder = new Label();
-          placeholder.setPrefSize(160, 120);
-          placeholder.setStyle("-fx-border-color: #2b2b2b; -fx-background-color: #1b1b1b;");
-          meta.getChildren().add(placeholder);
-        }
-      } catch (Exception ex) {
-        ex.printStackTrace();
-      }
-
-      // Add a "Close" button
-      Button close = new Button("Close");
-      close.getStyleClass().addAll("btn","btn-secondary");
-      close.setOnAction(ev -> d.close());
-      meta.getChildren().add(close);
-
-      // layout
-      top.getChildren().addAll(left, right);
-      right.getChildren().add(meta);
-
-      root.setCenter(new HBox(12, left, meta));
-
-      Scene sc = new Scene(root, 620, 320);
-      // apply profile.css if present
-      applyCss(sc, "profile.css");
-      d.setScene(sc);
-      d.showAndWait();
+      ProfilePage.showProfileGui(owner, conn);
     }
 
   } // end GuiApp
