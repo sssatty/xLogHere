@@ -443,6 +443,103 @@ public class Main {
     System.out.println("Focus updated successfully."); new Scanner(System.in).nextLine();
   }
 
+  // -------------------- NEW: edit task (terminal) -----------------------
+  /**
+   * Edit an existing task by name from the terminal.
+   * Press ENTER to keep the current value. If you provide a new major/minor element
+   * name, it must already exist; otherwise, the edit is aborted with a message.
+   */
+  private static void editTask(String taskName) {
+    try {
+      int tid = getTaskIdByName(taskName);
+      if (tid < 0) { System.out.println("Task not found."); return; }
+
+      // fetch current fields
+      String curName = null, curType = null;
+      int curFreq = 0, curMaj = -1, curMin = -1;
+      String curMajName = null, curMinName = null;
+
+      try (PreparedStatement ps = conn.prepareStatement(
+          "SELECT name, type, frequency, major_elem, minor_elem FROM tasks WHERE id = ?")) {
+        ps.setInt(1, tid);
+        try (ResultSet rs = ps.executeQuery()) {
+          if (rs.next()) {
+            curName = rs.getString(1);
+            curType = rs.getString(2);
+            curFreq = rs.getInt(3);
+            curMaj = rs.getInt(4);
+            curMin = rs.getInt(5);
+          }
+        }
+      }
+      // resolve element names for display
+      try (PreparedStatement ps = conn.prepareStatement("SELECT name FROM elements WHERE id = ?")) {
+        ps.setInt(1, curMaj);
+        try (ResultSet rs = ps.executeQuery()) { if (rs.next()) curMajName = rs.getString(1); }
+      }
+      try (PreparedStatement ps = conn.prepareStatement("SELECT name FROM elements WHERE id = ?")) {
+        ps.setInt(1, curMin);
+        try (ResultSet rs = ps.executeQuery()) { if (rs.next()) curMinName = rs.getString(1); }
+      }
+
+      Scanner sc = new Scanner(System.in);
+      System.out.println("-- Edit Task -- (press ENTER to keep current)");
+      System.out.print("Name [" + curName + "]: ");
+      String nameIn = sc.nextLine().trim();
+      if (nameIn.isEmpty()) nameIn = curName;
+
+      System.out.print("Type (quick/session/grind) [" + curType + "]: ");
+      String typeIn = sc.nextLine().trim();
+      if (typeIn.isEmpty()) typeIn = curType;
+
+      System.out.print("Frequency days (0=one-time) [" + curFreq + "]: ");
+      String freqIn = sc.nextLine().trim();
+      int freqOut = curFreq;
+      if (!freqIn.isEmpty()) {
+        try {
+          freqOut = Integer.parseInt(freqIn);
+        } catch (NumberFormatException nfe) {
+          System.out.println("Invalid frequency. Aborting edit.");
+          return;
+        }
+      }
+
+      System.out.print("Major element name [" + (curMajName == null ? ("id:"+curMaj) : curMajName) + "]: ");
+      String majIn = sc.nextLine().trim();
+      int majIdOut = curMaj;
+      if (!majIn.isEmpty()) {
+        int mid = getElementIdByName(majIn);
+        if (mid < 0) { System.out.println("Major element not found. Aborting edit."); return; }
+        majIdOut = mid;
+      }
+
+      System.out.print("Minor element name [" + (curMinName == null ? ("id:"+curMin) : curMinName) + "]: ");
+      String minIn = sc.nextLine().trim();
+      int minIdOut = curMin;
+      if (!minIn.isEmpty()) {
+        int mnid = getElementIdByName(minIn);
+        if (mnid < 0) { System.out.println("Minor element not found. Aborting edit."); return; }
+        minIdOut = mnid;
+      }
+
+      try (PreparedStatement up = conn.prepareStatement(
+          "UPDATE tasks SET name = ?, type = ?, frequency = ?, major_elem = ?, minor_elem = ? WHERE id = ?")) {
+        up.setString(1, nameIn);
+        up.setString(2, typeIn);
+        up.setInt(3, freqOut);
+        up.setInt(4, majIdOut);
+        up.setInt(5, minIdOut);
+        up.setInt(6, tid);
+        up.executeUpdate();
+      }
+
+      System.out.println("Task updated.");
+    } catch (SQLException ex) {
+      ex.printStackTrace();
+      System.out.println("Failed to update task: " + ex.getMessage());
+    }
+  }
+
   // -------------------- daily log ---------------------------------------
   private static void logTodayXp() throws SQLException {
     String today = nowStr();
@@ -651,6 +748,7 @@ public class Main {
       "  today              Show today's tasks\n" +
       "  create             Add a new task\n" +
       "  delete <task_name>   Delete task by name\n" +
+      "  edit   <task_name>   Edit task by name (terminal prompts)\n" +
       "  list               List all tasks\n" +
       "  enable <task_name>   Enable a task\n" +
       "  pause  <task_name>   Disable (pause) a task\n" +
@@ -799,7 +897,38 @@ public class Main {
           Label typeBadge = new Label(type.toUpperCase());
           typeBadge.getStyleClass().addAll("type-badge", "type-" + type);
 
-          // complete button
+          // NEW: Edit (GUI) button
+          Button editBtn = new Button("Edit");
+          editBtn.getStyleClass().addAll("btn","btn-secondary");
+          editBtn.setOnAction(ev -> {
+            editBtn.setDisable(true);
+            // show GUI editor (does its own DB work on a background thread)
+            showEditTaskDialog(editBtn.getScene().getWindow(), name);
+            // after dialog closes, refresh
+            refreshTasks();
+            editBtn.setDisable(false);
+          });
+
+          // NEW: Delete button (integrates existing deleteTask logic)
+          Button delBtn = new Button("Delete");
+          delBtn.getStyleClass().addAll("btn","btn-danger");
+          delBtn.setOnAction(ev -> {
+            // confirm first
+            if (confirmDelete(delBtn.getScene().getWindow(), name)) {
+              delBtn.setDisable(true);
+              new Thread(() -> {
+                try {
+                  deleteTask(name); // uses existing core delete logic
+                } catch (Exception ex) {
+                  ex.printStackTrace();
+                }
+                Platform.runLater(this::refreshTasks);
+                Platform.runLater(() -> delBtn.setDisable(false));
+              }).start();
+            }
+          });
+
+          // complete button (unchanged)
           Button done = new Button("Complete");
           done.getStyleClass().addAll("btn","btn-complete");
           done.setOnAction(ev -> {
@@ -813,7 +942,7 @@ public class Main {
             }).start();
           });
 
-          HBox rightCol = new HBox(10, typeBadge, done);
+          HBox rightCol = new HBox(10, typeBadge, editBtn, delBtn, done);
           rightCol.setAlignment(Pos.CENTER_RIGHT);
 
           Region spacer = new Region();
@@ -845,43 +974,275 @@ public class Main {
       d.initModality(Modality.APPLICATION_MODAL);
       d.setTitle("Create Task");
 
-      GridPane g = new GridPane();
-      g.setHgap(8); g.setVgap(8);
-      g.setPadding(new Insets(12));
+    // Main container with fancy styling
+    VBox mainContainer = new VBox(0);
+    mainContainer.setPrefSize(700, 600);
+    mainContainer.getStyleClass().add("dialog-main");
 
-      Label nameL = new Label("Task name:");
-      TextField nameF = new TextField();
-      Label typeL = new Label("Type (quick/session/grind):");
-      TextField typeF = new TextField();
-      Label freqL = new Label("Frequency (days, 0=one-time):");
-      TextField freqF = new TextField();
-      Label majL = new Label("Major element name:");
-      TextField majF = new TextField();
-      Label minL = new Label("Minor element name:");
-      TextField minF = new TextField();
+    // Header section
+    VBox headerSection = new VBox(8);
+    headerSection.setPadding(new Insets(20));
+    headerSection.getStyleClass().add("dialog-header");
+    
+    Label titleLabel = new Label("Create New Task");
+    titleLabel.getStyleClass().add("dialog-title");
+    
+    Label subtitleLabel = new Label("Set up your task with all the details");
+    subtitleLabel.getStyleClass().add("dialog-subtitle");
+    
+    headerSection.getChildren().addAll(titleLabel, subtitleLabel);
 
-      g.add(nameL, 0, 0); g.add(nameF, 1, 0);
-      g.add(typeL, 0, 1); g.add(typeF, 1, 1);
-      g.add(freqL, 0, 2); g.add(freqF, 1, 2);
-      g.add(majL, 0, 3); g.add(majF, 1, 3);
-      g.add(minL, 0, 4); g.add(minF, 1, 4);
+    // Scrollable content
+    ScrollPane scrollPane = new ScrollPane();
+    scrollPane.getStyleClass().add("dialog-scroll");
+    scrollPane.setFitToWidth(true);
+    scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+    scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
-      Button submit = new Button("Create");
-      submit.getStyleClass().addAll("btn","btn-primary");
-      Button cancel = new Button("Cancel");
-      cancel.getStyleClass().addAll("btn","btn-secondary");
-      HBox hb = new HBox(8, submit, cancel);
-      hb.setAlignment(Pos.CENTER_RIGHT);
-      g.add(hb, 1, 5);
+    VBox contentContainer = new VBox(16);
+    contentContainer.setPadding(new Insets(20));
+    contentContainer.getStyleClass().add("dialog-content");
 
-      submit.setOnAction(ev -> {
-        submit.setDisable(true);
+    // Task Name Section
+    VBox nameSection = new VBox(8);
+    nameSection.getStyleClass().add("form-section");
+    
+    HBox nameHeader = new HBox(8);
+    Label nameIcon = new Label("📝");
+    nameIcon.getStyleClass().add("section-icon");
+    Label nameTitle = new Label("Task Name");
+    nameTitle.getStyleClass().add("section-title");
+    nameHeader.getChildren().addAll(nameIcon, nameTitle);
+    
+    TextField nameField = new TextField();
+    nameField.setPromptText("Enter task name...");
+    nameField.getStyleClass().add("fancy-text-field");
+    nameField.setPrefHeight(40);
+    
+    nameSection.getChildren().addAll(nameHeader, nameField);
+
+    // Task Type Section
+    VBox typeSection = new VBox(8);
+    typeSection.getStyleClass().add("form-section");
+    
+    HBox typeHeader = new HBox(8);
+    Label typeIcon = new Label("⚡");
+    typeIcon.getStyleClass().add("section-icon");
+    Label typeTitle = new Label("Task Type");
+    typeTitle.getStyleClass().add("section-title");
+    typeHeader.getChildren().addAll(typeIcon, typeTitle);
+    
+    // Type selection with radio buttons
+    ToggleGroup typeGroup = new ToggleGroup();
+    
+    HBox typeCards = new HBox(12);
+    
+    // Quick Task Card
+    VBox quickCard = new VBox(8);
+    quickCard.getStyleClass().add("type-card");
+    quickCard.setPrefSize(160, 80);
+    RadioButton quickRadio = new RadioButton();
+    quickRadio.getStyleClass().add("type-radio");
+    quickRadio.setToggleGroup(typeGroup);
+    quickRadio.setUserData("quick");
+    quickRadio.setSelected(true); // Default selection
+    
+    Label quickTitle = new Label("Quick");
+    quickTitle.getStyleClass().add("type-title");
+    Label quickDesc = new Label("Short tasks");
+    quickDesc.getStyleClass().add("type-desc");
+    
+    quickCard.getChildren().addAll(quickRadio, quickTitle, quickDesc);
+    quickCard.setOnMouseClicked(e -> quickRadio.setSelected(true));
+    
+    // Session Task Card
+    VBox sessionCard = new VBox(8);
+    sessionCard.getStyleClass().add("type-card");
+    sessionCard.setPrefSize(160, 80);
+    RadioButton sessionRadio = new RadioButton();
+    sessionRadio.getStyleClass().add("type-radio");
+    sessionRadio.setToggleGroup(typeGroup);
+    sessionRadio.setUserData("session");
+    
+    Label sessionTitle = new Label("Session");
+    sessionTitle.getStyleClass().add("type-title");
+    Label sessionDesc = new Label("Focused work");
+    sessionDesc.getStyleClass().add("type-desc");
+    
+    sessionCard.getChildren().addAll(sessionRadio, sessionTitle, sessionDesc);
+    sessionCard.setOnMouseClicked(e -> sessionRadio.setSelected(true));
+    
+    // Grind Task Card
+    VBox grindCard = new VBox(8);
+    grindCard.getStyleClass().add("type-card");
+    grindCard.setPrefSize(160, 80);
+    RadioButton grindRadio = new RadioButton();
+    grindRadio.getStyleClass().add("type-radio");
+    grindRadio.setToggleGroup(typeGroup);
+    grindRadio.setUserData("grind");
+    
+    Label grindTitle = new Label("Grind");
+    grindTitle.getStyleClass().add("type-title");
+    Label grindDesc = new Label("Long-term goals");
+    grindDesc.getStyleClass().add("type-desc");
+    
+    grindCard.getChildren().addAll(grindRadio, grindTitle, grindDesc);
+    grindCard.setOnMouseClicked(e -> grindRadio.setSelected(true));
+    
+    typeCards.getChildren().addAll(quickCard, sessionCard, grindCard);
+    typeSection.getChildren().addAll(typeHeader, typeCards);
+
+    // Frequency Section
+    VBox freqSection = new VBox(8);
+    freqSection.getStyleClass().add("form-section");
+    
+    HBox freqHeader = new HBox(8);
+    Label freqIcon = new Label("🔄");
+    freqIcon.getStyleClass().add("section-icon");
+    Label freqTitle = new Label("Frequency");
+    freqTitle.getStyleClass().add("section-title");
+    freqHeader.getChildren().addAll(freqIcon, freqTitle);
+    
+    // Frequency field (declare first for lambda access)
+    TextField freqField = new TextField();
+    freqField.setPromptText("Enter frequency in days (0 = one-time)");
+    freqField.getStyleClass().add("fancy-text-field");
+    freqField.setPrefHeight(40);
+    freqField.setText("0"); // Default to one-time
+    
+    // Frequency presets
+    HBox freqPresets = new HBox(8);
+    
+    Button dailyBtn = new Button("Daily");
+    dailyBtn.getStyleClass().add("freq-preset");
+    dailyBtn.setPrefSize(100, 40);
+    dailyBtn.setOnAction(e -> {
+      freqField.setText("1");
+      freqPresets.getChildren().forEach(node -> {
+        if (node instanceof Button) node.getStyleClass().remove("freq-selected");
+      });
+      dailyBtn.getStyleClass().add("freq-selected");
+    });
+    
+    Button weeklyBtn = new Button("Weekly");
+    weeklyBtn.getStyleClass().add("freq-preset");
+    weeklyBtn.setPrefSize(100, 40);
+    weeklyBtn.setOnAction(e -> {
+      freqField.setText("7");
+      freqPresets.getChildren().forEach(node -> {
+        if (node instanceof Button) node.getStyleClass().remove("freq-selected");
+      });
+      weeklyBtn.getStyleClass().add("freq-selected");
+    });
+    
+    Button monthlyBtn = new Button("Monthly");
+    monthlyBtn.getStyleClass().add("freq-preset");
+    monthlyBtn.setPrefSize(100, 40);
+    monthlyBtn.setOnAction(e -> {
+      freqField.setText("30");
+      freqPresets.getChildren().forEach(node -> {
+        if (node instanceof Button) node.getStyleClass().remove("freq-selected");
+      });
+      monthlyBtn.getStyleClass().add("freq-selected");
+    });
+    
+    Button oneTimeBtn = new Button("One-time");
+    oneTimeBtn.getStyleClass().add("freq-preset");
+    oneTimeBtn.setPrefSize(100, 40);
+    oneTimeBtn.setOnAction(e -> {
+      freqField.setText("0");
+      freqPresets.getChildren().forEach(node -> {
+        if (node instanceof Button) node.getStyleClass().remove("freq-selected");
+      });
+      oneTimeBtn.getStyleClass().add("freq-selected");
+    });
+    
+    freqPresets.getChildren().addAll(dailyBtn, weeklyBtn, monthlyBtn, oneTimeBtn);
+    
+    freqSection.getChildren().addAll(freqHeader, freqPresets, freqField);
+
+    // Elements Section
+    VBox elementsSection = new VBox(8);
+    elementsSection.getStyleClass().add("form-section");
+    
+    HBox elementsHeader = new HBox(8);
+    Label elementsIcon = new Label("🎯");
+    elementsIcon.getStyleClass().add("section-icon");
+    Label elementsTitle = new Label("Elements");
+    elementsTitle.getStyleClass().add("section-title");
+    elementsHeader.getChildren().addAll(elementsIcon, elementsTitle);
+    
+    // Get elements for dropdowns
+    List<String> elements = new ArrayList<>();
+    try (PreparedStatement ps = conn.prepareStatement("SELECT name FROM elements ORDER BY name");
+         ResultSet rs = ps.executeQuery()) {
+      while (rs.next()) {
+        elements.add(rs.getString(1));
+      }
+    } catch (SQLException ex) {
+      ex.printStackTrace();
+    }
+    
+    HBox elementsRow = new HBox(12);
+    
+    VBox majorBox = new VBox(4);
+    Label majorLabel = new Label("Major Element");
+    majorLabel.getStyleClass().add("element-label");
+    ComboBox<String> majCombo = new ComboBox<>();
+    majCombo.getItems().addAll(elements);
+    majCombo.setEditable(true);
+    majCombo.getStyleClass().add("fancy-combo-box");
+    majCombo.setPrefHeight(40);
+    majorBox.getChildren().addAll(majorLabel, majCombo);
+    
+    VBox minorBox = new VBox(4);
+    Label minorLabel = new Label("Minor Element");
+    minorLabel.getStyleClass().add("element-label");
+    ComboBox<String> minCombo = new ComboBox<>();
+    minCombo.getItems().addAll(elements);
+    minCombo.setEditable(true);
+    minCombo.getStyleClass().add("fancy-combo-box");
+    minCombo.setPrefHeight(40);
+    minorBox.getChildren().addAll(minorLabel, minCombo);
+    
+    elementsRow.getChildren().addAll(majorBox, minorBox);
+    elementsSection.getChildren().addAll(elementsHeader, elementsRow);
+
+    // Add all sections to content
+    contentContainer.getChildren().addAll(nameSection, typeSection, freqSection, elementsSection);
+    scrollPane.setContent(contentContainer);
+
+    // Footer section
+    HBox footerSection = new HBox(12);
+    footerSection.setPadding(new Insets(20));
+    footerSection.setAlignment(Pos.CENTER_RIGHT);
+    footerSection.getStyleClass().add("dialog-footer");
+    
+    Button cancelBtn = new Button("Cancel");
+    cancelBtn.getStyleClass().addAll("btn", "btn-cancel");
+    cancelBtn.setPrefSize(120, 40);
+    
+    Button createBtn = new Button("Create Task");
+    createBtn.getStyleClass().addAll("btn", "btn-create");
+    createBtn.setPrefSize(120, 40);
+    
+    footerSection.getChildren().addAll(cancelBtn, createBtn);
+
+    // Add all sections to main container
+    mainContainer.getChildren().addAll(headerSection, scrollPane, footerSection);
+
+    // Event handlers
+    cancelBtn.setOnAction(ev -> d.close());
+    
+    createBtn.setOnAction(ev -> {
+      createBtn.setDisable(true);
         // gather fields
-        String name = nameF.getText().trim();
-        String type = typeF.getText().trim();
-        String freqS = freqF.getText().trim();
-        String maj = majF.getText().trim();
-        String min = minF.getText().trim();
+      String name = nameField.getText().trim();
+      final String type = typeGroup.getSelectedToggle() != null ? 
+        (String) typeGroup.getSelectedToggle().getUserData() : "quick";
+      String freqS = freqField.getText().trim();
+      String maj = majCombo.getValue() != null ? majCombo.getValue().trim() : majCombo.getEditor().getText().trim();
+      String min = minCombo.getValue() != null ? minCombo.getValue().trim() : minCombo.getEditor().getText().trim();
 
         // run DB insertion in background thread to keep UI responsive
         new Thread(() -> {
@@ -890,7 +1251,7 @@ public class Main {
             try { freq = Integer.parseInt(freqS); }
             catch (NumberFormatException nfe) {
               Platform.runLater(() -> {
-                submit.setDisable(false);
+                createBtn.setDisable(false);
                 showAlert(Alert.AlertType.ERROR, d, "Invalid frequency", "Frequency must be an integer.");
               });
               return;
@@ -899,7 +1260,7 @@ public class Main {
             int mi = getElementIdByName(maj), mn = getElementIdByName(min);
             if (mi < 0 || mn < 0) {
               Platform.runLater(() -> {
-                submit.setDisable(false);
+                createBtn.setDisable(false);
                 showAlert(Alert.AlertType.ERROR, d, "Element not found", "Major or minor element not found. (Behavior matches console: prints 'Element not found.')");
               });
               return;
@@ -923,20 +1284,468 @@ public class Main {
           } catch (SQLException ex) {
             ex.printStackTrace();
             Platform.runLater(() -> {
-              submit.setDisable(false);
+              createBtn.setDisable(false);
               showAlert(Alert.AlertType.ERROR, d, "Database error", ex.getMessage());
             });
           }
         }).start();
       });
 
-      cancel.setOnAction(ev -> d.close());
-
-      Scene sc = new Scene(g, 520, 280);
-      // apply create_task.css if present
+      Scene sc = new Scene(mainContainer, 700, 600);
       applyCss(sc, "create_task.css");
       d.setScene(sc);
       d.showAndWait();
+    }
+
+    // -------- NEW: Edit Task Dialog (GUI translation of TUI editTask) --------
+    private void showEditTaskDialog(Window owner, String taskName) {
+      Stage d = new Stage();
+      d.initOwner(owner);
+      d.initModality(Modality.APPLICATION_MODAL);
+      d.setTitle("Edit Task — " + taskName);
+
+      // Main container with fancy styling
+      VBox mainContainer = new VBox(0);
+      mainContainer.setPrefSize(600, 500);
+      mainContainer.getStyleClass().add("dialog-main");
+
+      // Header section
+      VBox headerSection = new VBox(8);
+      headerSection.setPadding(new Insets(20));
+      headerSection.getStyleClass().add("dialog-header");
+      
+      Label titleLabel = new Label("Edit Task");
+      titleLabel.getStyleClass().add("dialog-title");
+      
+      Label subtitleLabel = new Label("Modify your task details");
+      subtitleLabel.getStyleClass().add("dialog-subtitle");
+      
+      headerSection.getChildren().addAll(titleLabel, subtitleLabel);
+
+      // Scrollable content
+      ScrollPane scrollPane = new ScrollPane();
+      scrollPane.getStyleClass().add("dialog-scroll");
+      scrollPane.setFitToWidth(true);
+      scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+      scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+      VBox contentContainer = new VBox(16);
+      contentContainer.setPadding(new Insets(20));
+      contentContainer.getStyleClass().add("dialog-content");
+
+      // Task Name Section
+      VBox nameSection = new VBox(8);
+      nameSection.getStyleClass().add("form-section");
+      
+      HBox nameHeader = new HBox(8);
+      Label nameIcon = new Label("📝");
+      nameIcon.getStyleClass().add("section-icon");
+      Label nameTitle = new Label("Task Name");
+      nameTitle.getStyleClass().add("section-title");
+      nameHeader.getChildren().addAll(nameIcon, nameTitle);
+      
+      TextField nameField = new TextField();
+      nameField.setPromptText("Enter task name...");
+      nameField.getStyleClass().add("fancy-text-field");
+      nameField.setPrefHeight(40);
+      
+      nameSection.getChildren().addAll(nameHeader, nameField);
+
+      // Task Type Section
+      VBox typeSection = new VBox(8);
+      typeSection.getStyleClass().add("form-section");
+      
+      HBox typeHeader = new HBox(8);
+      Label typeIcon = new Label("⚡");
+      typeIcon.getStyleClass().add("section-icon");
+      Label typeTitle = new Label("Task Type");
+      typeTitle.getStyleClass().add("section-title");
+      typeHeader.getChildren().addAll(typeIcon, typeTitle);
+      
+      // Type selection with radio buttons
+      ToggleGroup typeGroup = new ToggleGroup();
+      
+      HBox typeCards = new HBox(12);
+      
+      // Quick Task Card
+      VBox quickCard = new VBox(8);
+      quickCard.getStyleClass().add("type-card");
+      quickCard.setPrefSize(160, 80);
+      RadioButton quickRadio = new RadioButton();
+      quickRadio.getStyleClass().add("type-radio");
+      quickRadio.setToggleGroup(typeGroup);
+      quickRadio.setUserData("quick");
+      
+      Label quickTitle = new Label("Quick");
+      quickTitle.getStyleClass().add("type-title");
+      Label quickDesc = new Label("Short tasks");
+      quickDesc.getStyleClass().add("type-desc");
+      
+      quickCard.getChildren().addAll(quickRadio, quickTitle, quickDesc);
+      quickCard.setOnMouseClicked(e -> quickRadio.setSelected(true));
+      
+      // Session Task Card
+      VBox sessionCard = new VBox(8);
+      sessionCard.getStyleClass().add("type-card");
+      sessionCard.setPrefSize(160, 80);
+      RadioButton sessionRadio = new RadioButton();
+      sessionRadio.getStyleClass().add("type-radio");
+      sessionRadio.setToggleGroup(typeGroup);
+      sessionRadio.setUserData("session");
+      
+      Label sessionTitle = new Label("Session");
+      sessionTitle.getStyleClass().add("type-title");
+      Label sessionDesc = new Label("Focused work");
+      sessionDesc.getStyleClass().add("type-desc");
+      
+      sessionCard.getChildren().addAll(sessionRadio, sessionTitle, sessionDesc);
+      sessionCard.setOnMouseClicked(e -> sessionRadio.setSelected(true));
+      
+      // Grind Task Card
+      VBox grindCard = new VBox(8);
+      grindCard.getStyleClass().add("type-card");
+      grindCard.setPrefSize(160, 80);
+      RadioButton grindRadio = new RadioButton();
+      grindRadio.getStyleClass().add("type-radio");
+      grindRadio.setToggleGroup(typeGroup);
+      grindRadio.setUserData("grind");
+      
+      Label grindTitle = new Label("Grind");
+      grindTitle.getStyleClass().add("type-title");
+      Label grindDesc = new Label("Long-term goals");
+      grindDesc.getStyleClass().add("type-desc");
+      
+      grindCard.getChildren().addAll(grindRadio, grindTitle, grindDesc);
+      grindCard.setOnMouseClicked(e -> grindRadio.setSelected(true));
+      
+      typeCards.getChildren().addAll(quickCard, sessionCard, grindCard);
+      typeSection.getChildren().addAll(typeHeader, typeCards);
+
+      // Frequency Section
+      VBox freqSection = new VBox(8);
+      freqSection.getStyleClass().add("form-section");
+      
+      HBox freqHeader = new HBox(8);
+      Label freqIcon = new Label("🔄");
+      freqIcon.getStyleClass().add("section-icon");
+      Label freqTitle = new Label("Frequency");
+      freqTitle.getStyleClass().add("section-title");
+      freqHeader.getChildren().addAll(freqIcon, freqTitle);
+      
+      // Frequency field (declare first for lambda access)
+      TextField freqField = new TextField();
+      freqField.setPromptText("Enter frequency in days (0 = one-time)");
+      freqField.getStyleClass().add("fancy-text-field");
+      freqField.setPrefHeight(40);
+      
+      // Frequency presets
+      HBox freqPresets = new HBox(8);
+      
+      Button dailyBtn = new Button("Daily");
+      dailyBtn.getStyleClass().add("freq-preset");
+      dailyBtn.setPrefSize(100, 40);
+      dailyBtn.setOnAction(e -> {
+        freqField.setText("1");
+        freqPresets.getChildren().forEach(node -> {
+          if (node instanceof Button) node.getStyleClass().remove("freq-selected");
+        });
+        dailyBtn.getStyleClass().add("freq-selected");
+      });
+      
+      Button weeklyBtn = new Button("Weekly");
+      weeklyBtn.getStyleClass().add("freq-preset");
+      weeklyBtn.setPrefSize(100, 40);
+      weeklyBtn.setOnAction(e -> {
+        freqField.setText("7");
+        freqPresets.getChildren().forEach(node -> {
+          if (node instanceof Button) node.getStyleClass().remove("freq-selected");
+        });
+        weeklyBtn.getStyleClass().add("freq-selected");
+      });
+      
+      Button monthlyBtn = new Button("Monthly");
+      monthlyBtn.getStyleClass().add("freq-preset");
+      monthlyBtn.setPrefSize(100, 40);
+      monthlyBtn.setOnAction(e -> {
+        freqField.setText("30");
+        freqPresets.getChildren().forEach(node -> {
+          if (node instanceof Button) node.getStyleClass().remove("freq-selected");
+        });
+        monthlyBtn.getStyleClass().add("freq-selected");
+      });
+      
+      Button oneTimeBtn = new Button("One-time");
+      oneTimeBtn.getStyleClass().add("freq-preset");
+      oneTimeBtn.setPrefSize(100, 40);
+      oneTimeBtn.setOnAction(e -> {
+        freqField.setText("0");
+        freqPresets.getChildren().forEach(node -> {
+          if (node instanceof Button) node.getStyleClass().remove("freq-selected");
+        });
+        oneTimeBtn.getStyleClass().add("freq-selected");
+      });
+      
+      freqPresets.getChildren().addAll(dailyBtn, weeklyBtn, monthlyBtn, oneTimeBtn);
+      
+      freqSection.getChildren().addAll(freqHeader, freqPresets, freqField);
+
+      // Elements Section
+      VBox elementsSection = new VBox(8);
+      elementsSection.getStyleClass().add("form-section");
+      
+      HBox elementsHeader = new HBox(8);
+      Label elementsIcon = new Label("🎯");
+      elementsIcon.getStyleClass().add("section-icon");
+      Label elementsTitle = new Label("Elements");
+      elementsTitle.getStyleClass().add("section-title");
+      elementsHeader.getChildren().addAll(elementsIcon, elementsTitle);
+      
+      // Get elements for dropdowns
+      List<String> elements = new ArrayList<>();
+      try (PreparedStatement ps = conn.prepareStatement("SELECT name FROM elements ORDER BY name");
+           ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          elements.add(rs.getString(1));
+        }
+      } catch (SQLException ex) {
+        ex.printStackTrace();
+      }
+      
+      HBox elementsRow = new HBox(12);
+      
+      VBox majorBox = new VBox(4);
+      Label majorLabel = new Label("Major Element");
+      majorLabel.getStyleClass().add("element-label");
+      ComboBox<String> majCombo = new ComboBox<>();
+      majCombo.getItems().addAll(elements);
+      majCombo.setEditable(true);
+      majCombo.getStyleClass().add("fancy-combo-box");
+      majCombo.setPrefHeight(40);
+      majorBox.getChildren().addAll(majorLabel, majCombo);
+      
+      VBox minorBox = new VBox(4);
+      Label minorLabel = new Label("Minor Element");
+      minorLabel.getStyleClass().add("element-label");
+      ComboBox<String> minCombo = new ComboBox<>();
+      minCombo.getItems().addAll(elements);
+      minCombo.setEditable(true);
+      minCombo.getStyleClass().add("fancy-combo-box");
+      minCombo.setPrefHeight(40);
+      minorBox.getChildren().addAll(minorLabel, minCombo);
+      
+      elementsRow.getChildren().addAll(majorBox, minorBox);
+      elementsSection.getChildren().addAll(elementsHeader, elementsRow);
+
+      // Add all sections to content
+      contentContainer.getChildren().addAll(nameSection, typeSection, freqSection, elementsSection);
+      scrollPane.setContent(contentContainer);
+
+      // Footer section
+      HBox footerSection = new HBox(12);
+      footerSection.setPadding(new Insets(20));
+      footerSection.setAlignment(Pos.CENTER_RIGHT);
+      footerSection.getStyleClass().add("dialog-footer");
+      
+      Button cancelBtn = new Button("Cancel");
+      cancelBtn.getStyleClass().addAll("btn", "btn-cancel");
+      cancelBtn.setPrefSize(120, 40);
+      
+      Button saveBtn = new Button("Save Changes");
+      saveBtn.getStyleClass().addAll("btn", "btn-save");
+      saveBtn.setPrefSize(120, 40);
+      
+      footerSection.getChildren().addAll(cancelBtn, saveBtn);
+
+      // Add all sections to main container
+      mainContainer.getChildren().addAll(headerSection, scrollPane, footerSection);
+
+      // Pre-fill from DB (same fields as TUI)
+      new Thread(() -> {
+        String curName = null, curType = null;
+        int curFreq = 0, curMaj = -1, curMin = -1;
+        String curMajName = null, curMinName = null;
+
+        try (PreparedStatement ps = conn.prepareStatement(
+               "SELECT id FROM tasks WHERE name = ?")) {
+          ps.setString(1, taskName);
+          try (ResultSet rs = ps.executeQuery()) {
+            if (!rs.next()) {
+              Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, d, "Not found", "Task not found."));
+              return;
+            }
+            int tid = rs.getInt(1);
+
+            try (PreparedStatement ps2 = conn.prepareStatement(
+                   "SELECT name, type, frequency, major_elem, minor_elem FROM tasks WHERE id = ?")) {
+              ps2.setInt(1, tid);
+              try (ResultSet r2 = ps2.executeQuery()) {
+                if (r2.next()) {
+                  curName = r2.getString(1);
+                  curType = r2.getString(2);
+                  curFreq = r2.getInt(3);
+                  curMaj = r2.getInt(4);
+                  curMin = r2.getInt(5);
+                }
+              }
+            }
+            try (PreparedStatement pn = conn.prepareStatement("SELECT name FROM elements WHERE id = ?")) {
+              pn.setInt(1, curMaj);
+              try (ResultSet rn = pn.executeQuery()) { if (rn.next()) curMajName = rn.getString(1); }
+            }
+            try (PreparedStatement pn = conn.prepareStatement("SELECT name FROM elements WHERE id = ?")) {
+              pn.setInt(1, curMin);
+              try (ResultSet rn = pn.executeQuery()) { if (rn.next()) curMinName = rn.getString(1); }
+            }
+          }
+        } catch (SQLException ex) {
+          ex.printStackTrace();
+        }
+
+        final String fCurName = curName;
+        final String fCurType = curType;
+        final int fCurFreq = curFreq;
+        final String fCurMajName = curMajName == null ? "" : curMajName;
+        final String fCurMinName = curMinName == null ? "" : curMinName;
+
+        Platform.runLater(() -> {
+          nameField.setText(fCurName == null ? "" : fCurName);
+          
+          // Set the correct type radio button
+          if ("quick".equals(fCurType)) {
+            quickRadio.setSelected(true);
+          } else if ("session".equals(fCurType)) {
+            sessionRadio.setSelected(true);
+          } else if ("grind".equals(fCurType)) {
+            grindRadio.setSelected(true);
+          }
+          
+          freqField.setText(String.valueOf(fCurFreq));
+          majCombo.setValue(fCurMajName);
+          minCombo.setValue(fCurMinName);
+        });
+      }).start();
+
+      // Event handlers
+      cancelBtn.setOnAction(ev -> d.close());
+      
+      saveBtn.setOnAction(ev -> {
+        saveBtn.setDisable(true);
+        new Thread(() -> {
+          try {
+            // resolve target id first
+            int tid = getTaskIdByName(taskName);
+            if (tid < 0) {
+              Platform.runLater(() -> {
+                saveBtn.setDisable(false);
+                showAlert(Alert.AlertType.ERROR, d, "Not found", "Task not found.");
+              });
+              return;
+            }
+
+            String nameIn = nameField.getText().trim();
+            String typeIn = typeGroup.getSelectedToggle() != null ? 
+              (String) typeGroup.getSelectedToggle().getUserData() : "quick";
+            String freqIn = freqField.getText().trim();
+            String majIn = majCombo.getValue() != null ? majCombo.getValue().trim() : majCombo.getEditor().getText().trim();
+            String minIn = minCombo.getValue() != null ? minCombo.getValue().trim() : minCombo.getEditor().getText().trim();
+
+            // fetch current (for ENTER/empty = keep current behavior)
+            String curName = null, curType = null;
+            int curFreq = 0, curMaj = -1, curMin = -1;
+            try (PreparedStatement ps = conn.prepareStatement(
+                   "SELECT name, type, frequency, major_elem, minor_elem FROM tasks WHERE id = ?")) {
+              ps.setInt(1, tid);
+              try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                  curName = rs.getString(1);
+                  curType = rs.getString(2);
+                  curFreq = rs.getInt(3);
+                  curMaj = rs.getInt(4);
+                  curMin = rs.getInt(5);
+                }
+              }
+            }
+
+            if (nameIn.isEmpty()) nameIn = curName;
+            if (typeIn.isEmpty()) typeIn = curType;
+
+            int freqOut = curFreq;
+            if (!freqIn.isEmpty()) {
+              try { freqOut = Integer.parseInt(freqIn); }
+              catch (NumberFormatException nfe) {
+                final String msg = "Frequency must be an integer.";
+                Platform.runLater(() -> {
+                  saveBtn.setDisable(false);
+                  showAlert(Alert.AlertType.ERROR, d, "Invalid frequency", msg);
+                });
+                return;
+              }
+            }
+
+            int majIdOut = curMaj;
+            if (!majIn.isEmpty()) {
+              int mid = getElementIdByName(majIn);
+              if (mid < 0) {
+                Platform.runLater(() -> {
+                  saveBtn.setDisable(false);
+                  showAlert(Alert.AlertType.ERROR, d, "Major element not found", "Major element not found. Aborting edit.");
+                });
+                return;
+              }
+              majIdOut = mid;
+            }
+
+            int minIdOut = curMin;
+            if (!minIn.isEmpty()) {
+              int mnid = getElementIdByName(minIn);
+              if (mnid < 0) {
+                Platform.runLater(() -> {
+                  saveBtn.setDisable(false);
+                  showAlert(Alert.AlertType.ERROR, d, "Minor element not found", "Minor element not found. Aborting edit.");
+                });
+                return;
+              }
+              minIdOut = mnid;
+            }
+
+            try (PreparedStatement up = conn.prepareStatement(
+                   "UPDATE tasks SET name = ?, type = ?, frequency = ?, major_elem = ?, minor_elem = ? WHERE id = ?")) {
+              up.setString(1, nameIn);
+              up.setString(2, typeIn);
+              up.setInt(3, freqOut);
+              up.setInt(4, majIdOut);
+              up.setInt(5, minIdOut);
+              up.setInt(6, tid);
+              up.executeUpdate();
+            }
+
+            Platform.runLater(() -> {
+              d.close();
+            });
+          } catch (SQLException ex) {
+            ex.printStackTrace();
+            Platform.runLater(() -> {
+              saveBtn.setDisable(false);
+              showAlert(Alert.AlertType.ERROR, d, "Database error", ex.getMessage());
+            });
+          }
+        }).start();
+      });
+
+      Scene sc = new Scene(mainContainer, 600, 500);
+      applyCss(sc, "edit_task.css");
+      d.setScene(sc);
+      d.showAndWait();
+    }
+
+    // -------- NEW: confirm delete helper --------
+    private boolean confirmDelete(Window owner, String taskName) {
+      Alert a = new Alert(Alert.AlertType.CONFIRMATION, "Delete task \"" + taskName + "\"?", ButtonType.YES, ButtonType.NO);
+      a.initOwner(owner);
+      a.setTitle("Confirm Delete");
+      a.setHeaderText(null);
+      a.showAndWait();
+      return a.getResult() == ButtonType.YES;
     }
 
     private void showAlert(Alert.AlertType t, Window owner, String title, String message) {
@@ -988,7 +1797,7 @@ public class Main {
             domainNames[idx] = rs.getString(2);
             try (PreparedStatement s2 = conn.prepareStatement("SELECT COALESCE(SUM(xp),0) FROM elements WHERE domain_id = ?")) {
               s2.setInt(1, id);
-              try (ResultSet r2 = s2.executeQuery()) { if (r2.next()) domainXps[idx] = r2.getDouble(1); }
+              try (ResultSet r2 = s2.executeQuery()) { if (rs.next()) domainXps[idx] = r2.getDouble(1); }
             }
             idx++;
           }

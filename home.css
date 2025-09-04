@@ -21,11 +21,7 @@
 .root, .border-pane {
     -fx-font-family: "JetBrains Mono", "JetBrainsMono Nerd Font", "Inter", "Segoe UI", monospace;
     -fx-font-size: 13px;
-    -fx-background-color:
-      linear-gradient(to bottom right,
-        rgba(18,18,26,1) 0%,
-        rgba(28,28,38,1) 45%,
-        rgba(12,12,16,1) 100%);
+      -fx-background-color: #1a1a28;
     -fx-text-fill: #cdd6f4;
     -fx-padding: 12;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 20, 0.0, 0, 8);
@@ -72,9 +68,7 @@
   
   /* Primary: subtle glass with blue accent */
   .btn-primary {
-    -fx-background-color:
-      linear-gradient(from 0% 0% to 100% 100%, rgba(137,180,250,0.18) 0%, rgba(137,180,250,0.08) 55%),
-      linear-gradient(#2d354a, #232633);
+      -fx-background-color: #2d354a;
     -fx-text-fill: #eaf3ff;
     -fx-padding: 10 14 10 14;
     -fx-border-radius: 12;
@@ -83,7 +77,7 @@
   
   /* Secondary: muted glass */
   .btn-secondary {
-    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    -fx-background-color: rgba(255,255,255,0.02);
     -fx-text-fill: #cdd6f4;
     -fx-border-color: rgba(255,255,255,0.04);
     -fx-border-width: 1;
@@ -92,8 +86,7 @@
   
   /* Accent complete button (kept but uses Catppuccin blue -> violet gradient) */
   .btn-complete {
-    -fx-background-color:
-      linear-gradient(from 0% 0% to 100% 100%, rgba(137,180,250,0.92) 0%, rgba(180,190,254,0.84) 60%);
+      -fx-background-color: #89b4fa;
     -fx-text-fill: #071026;
     -fx-padding: 8 12 8 12;
     -fx-background-radius: 11;
@@ -131,11 +124,7 @@
   /* ---------- task card (more distinguishable) -------------------------- */
   /* card base: slightly lighter glass panel + subtle inner shadow for depth */
   .task-row {
-    -fx-background-color:
-      linear-gradient(to bottom right,
-        rgba(255,255,255,0.012) 0%,
-        rgba(0,0,0,0.06) 100%),
-      rgba(20,20,24,0.4);
+      -fx-background-color: rgba(20,20,24,0.4);
     -fx-background-insets: 0, 0;
     -fx-background-radius: 14;
     -fx-padding: 14 16 14 16;
@@ -156,11 +145,7 @@
     -fx-effect:
       dropshadow(gaussian, rgba(3,6,14,0.56), 34, 0.0, 0, 16),
       innershadow(gaussian, rgba(0,0,0,0.22), 4, 0.0, 0, 1);
-    -fx-background-color:
-      linear-gradient(to bottom right,
-        rgba(137,180,250,0.02) 0%,
-        rgba(0,0,0,0.04) 100%),
-      rgba(26,26,32,0.54);
+      -fx-background-color: rgba(26,26,32,0.54);
   }
   
   /* pressed */
@@ -188,7 +173,7 @@
     -fx-border-color: rgba(0,0,0,0.28);
     -fx-border-width: 1;
     /* subtle glass fill for domain dot (if not set inline) */
-    -fx-background-color: linear-gradient(#2a3342, rgba(255,255,255,0.02));
+    -fx-background-color: #2a3342;
   }
   
   /* domain label */
@@ -213,7 +198,7 @@
   
   /* focus badge */
   .focus-badge {
-    -fx-background-color: linear-gradient(#f38ba8, #ea7aa8);
+    -fx-background-color: #f38ba8;
     -fx-text-fill: #0f0a0e;
     -fx-font-weight: 800;
     -fx-padding: 4 8;
@@ -223,7 +208,7 @@
   
   /* streak badge */
   .streak-badge {
-    -fx-background-color: linear-gradient(#a6e3a1, #79c389);
+    -fx-background-color: #a6e3a1;
     -fx-text-fill: #08140a;
     -fx-font-weight: 800;
     -fx-padding: 4 8;
@@ -241,9 +226,9 @@
   }
   
   /* type-specific colors now aligned to mocha theme */
-  .type-quick   { -fx-background-color: linear-gradient(#a6e3a1, #79c389); -fx-text-fill: #071014; } /* green */
-  .type-session { -fx-background-color: linear-gradient(#89b4fa, #6fa8f2); -fx-text-fill: #071026; } /* blue */
-  .type-grind   { -fx-background-color: linear-gradient(#b4befe, #8fa9ff); -fx-text-fill: #071026; } /* violet */
+  .type-quick   { -fx-background-color: #a6e3a1; -fx-text-fill: #071014; } /* green */
+.type-session { -fx-background-color: #89b4fa; -fx-text-fill: #071026; } /* blue */
+.type-grind   { -fx-background-color: #b4befe; -fx-text-fill: #071026; } /* violet */
   
   /* ---------- make the "none" state subtle and readable ------------------ */
   .none-label, .label.no-tasks {
@@ -279,7 +264,7 @@
     -fx-padding: 6;
   }
   .progress-bar .track { -fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 6; }
-  .progress-bar .bar { -fx-background-color: linear-gradient(90deg, #89b4fa, #b4befe); -fx-background-radius: 6; }
+  .progress-bar .bar { -fx-background-color: #89b4fa; -fx-background-radius: 6; }
   
   /* ---------- avatar / image -------------------------------------------- */
   .image-view {
@@ -289,14 +274,14 @@
   
   /* placeholder label border */
   .label[style*="-fx-border-color"] {
-    -fx-background-color: linear-gradient(#0f1116, #141418);
+    -fx-background-color: #0f1116;
     -fx-border-color: rgba(255,255,255,0.04);
     -fx-border-radius: 8;
   }
   
   /* ---------- utilities -------------------------------------------------- */
   .hint { -fx-font-size: 11px; -fx-text-fill: #6c6f85; -fx-font-style: italic; }
-  .count-badge { -fx-background-color: linear-gradient(#89b4fa,#7aa2f7); -fx-background-radius: 999; -fx-text-fill: #071026; -fx-font-weight: 800; -fx-padding: 4 8; -fx-font-size: 11px; }
+  .count-badge { -fx-background-color: #89b4fa; -fx-background-radius: 999; -fx-text-fill: #071026; -fx-font-weight: 800; -fx-padding: 4 8; -fx-font-size: 11px; }
   
   /* elevation helpers */
   .elev-1 { -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 6, 0.0, 0, 3); }

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   xLog — Create Task Dialog CSS (JavaFX Compatible)
+   xLog — Edit Task Dialog CSS (JavaFX Compatible)
    - Modern styling with JavaFX-compatible syntax
    - Beautiful colors, shadows, and effects
    ========================================================================== */
@@ -190,7 +190,7 @@
   -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0.0, 0, 2);
 }
 
-.btn-create {
+.btn-save {
   -fx-background-color: #89b4fa;
   -fx-background-radius: 8;
   -fx-text-fill: #ffffff;
@@ -199,12 +199,12 @@
   -fx-cursor: hand;
 }
 
-.btn-create:hover {
+.btn-save:hover {
   -fx-background-color: #7aa2f7;
   -fx-effect: dropshadow(gaussian, rgba(137, 180, 250, 0.4), 15, 0.0, 0, 6);
 }
 
-.btn-create:disabled {
+.btn-save:disabled {
   -fx-background-color: #6c757d;
   -fx-opacity: 0.5;
   -fx-cursor: default;
