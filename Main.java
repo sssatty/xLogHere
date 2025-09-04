@@ -815,24 +815,28 @@ public class Main {
           row.getStyleClass().add("task-row");
           row.setAlignment(Pos.CENTER_LEFT);
 
-          // domain dot + domain short label (color-coded)
-          Region dot = new Region();
-          dot.getStyleClass().add("domain-dot");
-          dot.setPrefSize(12, 12);
-          // map domain id to one of GUI_COLORS (safe, non-logic affecting)
+          // Left colored bar + domain info
+          Region leftBar = new Region();
           String domainColor = GUI_COLORS[Math.max(0, (did - 1) % GUI_COLORS.length)];
-          dot.setStyle("-fx-background-color: " + domainColor + "; -fx-background-radius: 6px; -fx-border-color: rgba(255,255,255,0.06); -fx-border-radius: 6px;");
-
+          leftBar.setStyle("-fx-background-color: " + domainColor + "; -fx-min-width: 6; -fx-max-width: 6;");
+          
+          VBox domainInfo = new VBox(2);
+          domainInfo.setPadding(new Insets(0, 12, 0, 12));
+          domainInfo.setAlignment(Pos.CENTER_LEFT);
+          
           Label domainLabel = new Label(dname);
           domainLabel.getStyleClass().add("domain-label");
-          domainLabel.setMinWidth(98);
+          domainLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #ffffff;");
+          
+          Label elementLabel = new Label(majName);
+          elementLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #bfc9d3;");
+          
+          domainInfo.getChildren().addAll(domainLabel, elementLabel);
 
-          VBox leftCol = new VBox(4);
-          leftCol.getChildren().addAll(new HBox(8, dot, domainLabel));
-
-          // task name and small meta line
+          // Center task name and meta info
           Label nameLbl = new Label(name);
           nameLbl.getStyleClass().add("task-name");
+          nameLbl.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-font-style: italic; -fx-text-fill: #ffffff;");
 
           Label meta = new Label("Major: " + majName);
           meta.getStyleClass().add("task-meta");
@@ -842,26 +846,22 @@ public class Main {
           focusLabel.getStyleClass().add("focus-badge");
           focusLabel.setVisible(isFocus);
 
-          // streak badge (small)
-          Label streakLbl = new Label((streak > 0 ? "🔥 " + streak : "—"));
-          streakLbl.getStyleClass().add("streak-badge");
-
-          HBox metaRow = new HBox(8, meta, focusLabel, streakLbl);
+          HBox metaRow = new HBox(8, meta, focusLabel);
           metaRow.setAlignment(Pos.CENTER_LEFT);
 
           VBox centerCol = new VBox(2, nameLbl, metaRow);
           HBox.setHgrow(centerCol, Priority.ALWAYS);
 
-          // type badge (left aligned on right side)
+          // Right side buttons
+          Label streakLbl = new Label((streak > 0 ? "🔥 " + streak : "—"));
+          streakLbl.getStyleClass().add("streak-badge");
+
           Label typeBadge = new Label(type.toUpperCase());
           typeBadge.getStyleClass().addAll("type-badge", "type-" + type);
 
-
-          // complete button (unchanged)
           Button done = new Button("Complete");
           done.getStyleClass().addAll("btn","btn-complete");
           done.setOnAction(ev -> {
-            // keep existing logic (off UI thread)
             done.setDisable(true);
             new Thread(() -> {
               try {
@@ -871,13 +871,13 @@ public class Main {
             }).start();
           });
 
-          HBox rightCol = new HBox(10, typeBadge, done);
+          HBox rightCol = new HBox(10, streakLbl, typeBadge, done);
           rightCol.setAlignment(Pos.CENTER_RIGHT);
 
           Region spacer = new Region();
           HBox.setHgrow(spacer, Priority.ALWAYS);
 
-          row.getChildren().addAll(leftCol, centerCol, spacer, rightCol);
+          row.getChildren().addAll(leftBar, domainInfo, centerCol, spacer, rightCol);
           // attach tooltip summarizing key bits
           Tooltip ttip = new Tooltip("Domain: " + dname + "\nMajor: " + majName + "\nType: " + type + "\nStreak: " + streak + (isFocus ? "\nFocus: yes" : ""));
           Tooltip.install(row, ttip);
