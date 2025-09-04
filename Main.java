@@ -1137,8 +1137,25 @@ public class Main {
     elementsRow.getChildren().addAll(majorBox, minorBox);
     elementsSection.getChildren().addAll(elementsHeader, elementsRow);
 
+    // Focus Toggle Section
+    VBox focusSection = new VBox(8);
+    focusSection.getStyleClass().add("form-section");
+    
+    HBox focusHeader = new HBox(8);
+    Label focusIcon = new Label("⭐");
+    focusIcon.getStyleClass().add("section-icon");
+    Label focusTitle = new Label("Focus Element");
+    focusTitle.getStyleClass().add("section-title");
+    focusHeader.getChildren().addAll(focusIcon, focusTitle);
+    
+    CheckBox focusToggle = new CheckBox("Set major element as focus");
+    focusToggle.getStyleClass().add("focus-toggle");
+    focusToggle.setTooltip(new Tooltip("Focus elements get 10% bonus XP. Only one element per domain can be focus."));
+    
+    focusSection.getChildren().addAll(focusHeader, focusToggle);
+
     // Add all sections to content
-    contentContainer.getChildren().addAll(nameSection, typeSection, freqSection, elementsSection);
+    contentContainer.getChildren().addAll(nameSection, typeSection, freqSection, elementsSection, focusSection);
     scrollPane.setContent(contentContainer);
 
     // Footer section
@@ -1172,6 +1189,7 @@ public class Main {
       String freqS = freqField.getText().trim();
       String maj = majCombo.getValue() != null ? majCombo.getValue().trim() : majCombo.getEditor().getText().trim();
       String min = minCombo.getValue() != null ? minCombo.getValue().trim() : minCombo.getEditor().getText().trim();
+      final boolean setFocus = focusToggle.isSelected();
 
         // run DB insertion in background thread to keep UI responsive
         new Thread(() -> {
@@ -1203,6 +1221,31 @@ public class Main {
               ps.setInt(4, mi);
               ps.setInt(5, mn);
               ps.executeUpdate();
+            }
+
+            // Handle focus setting if requested
+            if (setFocus) {
+              // Get domain ID for the major element
+              int domId = -1;
+              try (PreparedStatement ps = conn.prepareStatement("SELECT domain_id FROM elements WHERE id = ?")) {
+                ps.setInt(1, mi);
+                try (ResultSet rs = ps.executeQuery()) { 
+                  if (rs.next()) domId = rs.getInt(1); 
+                }
+              }
+              
+              if (domId != -1) {
+                // Unfocus all elements in the same domain
+                try (PreparedStatement ps = conn.prepareStatement("UPDATE elements SET is_focus = 0 WHERE domain_id = ?")) {
+                  ps.setInt(1, domId); 
+                  ps.executeUpdate();
+                }
+                // Set the major element as focus
+                try (PreparedStatement ps = conn.prepareStatement("UPDATE elements SET is_focus = 1 WHERE id = ?")) {
+                  ps.setInt(1, mi); 
+                  ps.executeUpdate();
+                }
+              }
             }
 
             Platform.runLater(() -> {
@@ -1464,8 +1507,25 @@ public class Main {
       elementsRow.getChildren().addAll(majorBox, minorBox);
       elementsSection.getChildren().addAll(elementsHeader, elementsRow);
 
+      // Focus Toggle Section
+      VBox focusSection = new VBox(8);
+      focusSection.getStyleClass().add("form-section");
+      
+      HBox focusHeader = new HBox(8);
+      Label focusIcon = new Label("⭐");
+      focusIcon.getStyleClass().add("section-icon");
+      Label focusTitle = new Label("Focus Element");
+      focusTitle.getStyleClass().add("section-title");
+      focusHeader.getChildren().addAll(focusIcon, focusTitle);
+      
+      CheckBox focusToggle = new CheckBox("Set major element as focus");
+      focusToggle.getStyleClass().add("focus-toggle");
+      focusToggle.setTooltip(new Tooltip("Focus elements get 10% bonus XP. Only one element per domain can be focus."));
+      
+      focusSection.getChildren().addAll(focusHeader, focusToggle);
+
       // Add all sections to content
-      contentContainer.getChildren().addAll(nameSection, typeSection, freqSection, elementsSection);
+      contentContainer.getChildren().addAll(nameSection, typeSection, freqSection, elementsSection, focusSection);
       scrollPane.setContent(contentContainer);
 
       // Footer section
@@ -1529,11 +1589,25 @@ public class Main {
           ex.printStackTrace();
         }
 
+        // Check if current major element is focus
+        boolean isCurrentFocus = false;
+        if (curMaj > 0) {
+          try (PreparedStatement ps = conn.prepareStatement("SELECT is_focus FROM elements WHERE id = ?")) {
+            ps.setInt(1, curMaj);
+            try (ResultSet rs = ps.executeQuery()) {
+              if (rs.next()) isCurrentFocus = rs.getInt(1) == 1;
+            }
+          } catch (SQLException ex) {
+            ex.printStackTrace();
+          }
+        }
+
         final String fCurName = curName;
         final String fCurType = curType;
         final int fCurFreq = curFreq;
         final String fCurMajName = curMajName == null ? "" : curMajName;
         final String fCurMinName = curMinName == null ? "" : curMinName;
+        final boolean fIsCurrentFocus = isCurrentFocus;
 
         Platform.runLater(() -> {
           nameField.setText(fCurName == null ? "" : fCurName);
@@ -1550,6 +1624,7 @@ public class Main {
           freqField.setText(String.valueOf(fCurFreq));
           majCombo.setValue(fCurMajName);
           minCombo.setValue(fCurMinName);
+          focusToggle.setSelected(fIsCurrentFocus);
         });
       }).start();
 
@@ -1576,6 +1651,7 @@ public class Main {
             String freqIn = freqField.getText().trim();
             String majIn = majCombo.getValue() != null ? majCombo.getValue().trim() : majCombo.getEditor().getText().trim();
             String minIn = minCombo.getValue() != null ? minCombo.getValue().trim() : minCombo.getEditor().getText().trim();
+            final boolean setFocus = focusToggle.isSelected();
 
             // fetch current (for ENTER/empty = keep current behavior)
             String curName = null, curType = null;
@@ -1645,6 +1721,31 @@ public class Main {
               up.setInt(5, minIdOut);
               up.setInt(6, tid);
               up.executeUpdate();
+            }
+
+            // Handle focus setting if requested
+            if (setFocus) {
+              // Get domain ID for the major element
+              int domId = -1;
+              try (PreparedStatement ps = conn.prepareStatement("SELECT domain_id FROM elements WHERE id = ?")) {
+                ps.setInt(1, majIdOut);
+                try (ResultSet rs = ps.executeQuery()) { 
+                  if (rs.next()) domId = rs.getInt(1); 
+                }
+              }
+              
+              if (domId != -1) {
+                // Unfocus all elements in the same domain
+                try (PreparedStatement ps = conn.prepareStatement("UPDATE elements SET is_focus = 0 WHERE domain_id = ?")) {
+                  ps.setInt(1, domId); 
+                  ps.executeUpdate();
+                }
+                // Set the major element as focus
+                try (PreparedStatement ps = conn.prepareStatement("UPDATE elements SET is_focus = 1 WHERE id = ?")) {
+                  ps.setInt(1, majIdOut); 
+                  ps.executeUpdate();
+                }
+              }
             }
 
             Platform.runLater(() -> {
@@ -1897,8 +1998,42 @@ public class Main {
             }).start();
           });
 
+          // Do Today button
+          Button doTodayBtn = new Button("Do Today");
+          doTodayBtn.getStyleClass().addAll("btn", "btn-primary");
+          doTodayBtn.setPrefWidth(80);
+          doTodayBtn.setOnAction(ev -> {
+            doTodayBtn.setDisable(true);
+            new Thread(() -> {
+              try {
+                // For recurring tasks, set last_done to a date that makes it due today
+                // For one-time tasks, set last_done to null so they appear
+                if (freq == 0) {
+                  // One-time task: set last_done to null so it appears in today's list
+                  try (PreparedStatement updatePs = conn.prepareStatement("UPDATE tasks SET last_done = NULL WHERE id = ?")) {
+                    updatePs.setInt(1, id);
+                    updatePs.executeUpdate();
+                  }
+                } else {
+                  // Recurring task: set last_done to (today - frequency) so next due is today
+                  try (PreparedStatement updatePs = conn.prepareStatement("UPDATE tasks SET last_done = date('now','localtime','-" + freq + " days') WHERE id = ?")) {
+                    updatePs.setInt(1, id);
+                    updatePs.executeUpdate();
+                  }
+                }
+              } catch (Exception ex) {
+                ex.printStackTrace();
+              }
+              Platform.runLater(() -> {
+                refreshAllTasksList(tasksList, searchField);
+                refreshTasks(); // Also refresh the main today's tasks list
+                doTodayBtn.setDisable(false);
+              });
+            }).start();
+          });
+
           taskRow.getChildren().addAll(nameLabel, typeBadge, freqLabel, lastDoneLabel, 
-                                     streakLabel, statusLabel, editBtn, deleteBtn, toggleBtn);
+                                     streakLabel, statusLabel, editBtn, deleteBtn, toggleBtn, doTodayBtn);
           tasksList.getChildren().add(taskRow);
         }
         
