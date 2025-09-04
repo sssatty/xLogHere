@@ -11,6 +11,7 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.*;
 import javafx.scene.paint.*;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -235,108 +236,84 @@ public class ProfilePage {
             ex.printStackTrace();
         }
 
-        // Top section: User info (left) and Avatar (right)
-        HBox topSection = new HBox(30);
+        // Top section: User info (left) and Spider Chart (right) - equal height
+        HBox topSection = new HBox(20);
         topSection.setAlignment(Pos.CENTER_LEFT);
-        topSection.setPadding(new Insets(0, 0, 20, 0));
+        topSection.setPadding(new Insets(0, 0, 16, 0));
         
         // Left side: User information with proper focus levels
-        VBox userInfo = new VBox(8);
+        VBox userInfo = new VBox(12);
         userInfo.setAlignment(Pos.TOP_LEFT);
+        userInfo.setPadding(new Insets(20, 0, 0, 0)); // More padding from top
         
         String hex = GUI_COLORS[Math.max(0, Math.min(GUI_COLORS.length-1, lvl))];
         
-        // RANK (mid focus) - smaller, color coded
+        // RANK (mid focus) - larger, color coded
         Label rankLabel = new Label(rank);
-        rankLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: " + hex + "; -fx-font-style: italic;");
+        rankLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: " + hex + "; -fx-font-style: italic;");
         rankLabel.setPadding(new Insets(0,0,4,0));
 
-        // NAME (High focus) - largest, bold, white
+        // NAME (High focus) - largest, color coded like rank
         Label userLabel = new Label(user);
-        userLabel.setStyle("-fx-font-size: 28px; -fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-style: italic;");
+        userLabel.setStyle("-fx-font-size: 42px; -fx-text-fill: " + hex + "; -fx-font-weight: bold; -fx-font-style: italic;");
         userLabel.setPadding(new Insets(0,0,8,0));
 
-        // XP (low focus) - smaller, color coded
+        // XP (low focus) - slightly larger, color coded
         Label xpLabel = new Label("XP: " + ((int)profileXp));
-        xpLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: " + hex + "; -fx-font-weight: normal; -fx-font-style: italic;");
+        xpLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: " + hex + "; -fx-font-weight: normal; -fx-font-style: italic;");
         xpLabel.setPadding(new Insets(0,0,6,0));
 
-        // XP bar (low focus) - smaller
+        // XP bar (low focus) - enhanced styling
         ProgressBar pb = new ProgressBar(frac);
-        pb.setPrefWidth(200);
-        pb.setPrefHeight(8);
-        pb.setStyle("-fx-accent: " + hex + "; -fx-background-color: #2c2c2c; -fx-border-color: #404040; -fx-border-width: 1px; -fx-border-radius: 4px; -fx-background-radius: 4px;");
+        pb.setPrefWidth(280);
+        pb.setPrefHeight(16);
+        pb.setStyle("-fx-accent: " + hex + "; " +
+                   "-fx-background-color: #1a1a1a; " +
+                   "-fx-border-color: #333333; " +
+                   "-fx-border-width: 2px; " +
+                   "-fx-border-radius: 8px; " +
+                   "-fx-background-radius: 8px; " +
+                   "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 4, 0, 0, 1);");
         pb.setPadding(new Insets(0,0,6,0));
 
-        // Days left (low focus) - smallest
+        // Days left (low focus) - larger
         Label timeLabel = new Label("Time left: " + daysLeft + " days");
-        timeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #bfc9d3; -fx-font-weight: normal; -fx-font-style: italic;");
+        timeLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #bfc9d3; -fx-font-weight: normal; -fx-font-style: italic;");
         timeLabel.setPadding(new Insets(0,0,0,0));
 
         userInfo.getChildren().addAll(rankLabel, userLabel, xpLabel, pb, timeLabel);
         
-        // Right side: Avatar placeholder
-        VBox avatarSection = new VBox(8);
-        avatarSection.setAlignment(Pos.CENTER);
+        // Right side: Single spider chart with 4 domains as axes
+        VBox spiderChartSection = createSingleDomainSpiderChart(conn);
         
-        // Avatar placeholder
-        Label avatarPlaceholder = new Label("👤");
-        avatarPlaceholder.setStyle("-fx-font-size: 80px; -fx-text-fill: #404040;");
-        avatarPlaceholder.setPrefSize(120, 120);
-        avatarPlaceholder.setStyle("-fx-font-size: 80px; -fx-text-fill: #404040; -fx-background-color: #2c2c2c; -fx-border-color: #404040; -fx-border-width: 2px; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-alignment: center;");
+        // Set equal height for both sections and align bottoms
+        userInfo.setPrefHeight(220);
+        spiderChartSection.setPrefHeight(220);
         
-        avatarSection.getChildren().add(avatarPlaceholder);
+        // Align the bottom of spider chart with XP progress bar
+        spiderChartSection.setAlignment(Pos.BOTTOM_CENTER);
         
-        topSection.getChildren().addAll(userInfo, avatarSection);
+        topSection.getChildren().addAll(userInfo, spiderChartSection);
 
-        // Add a "Close" button to the top section
-        Button close = new Button("Close");
-        close.getStyleClass().addAll("btn","btn-secondary");
-        close.setOnAction(ev -> d.close());
-        close.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-font-style: italic;");
-        
-        // Add close button to avatar section
-        avatarSection.getChildren().add(close);
-
-        // Create 4 domain spider charts in a row
-        HBox domainsChartsSection = new HBox(15);
-        domainsChartsSection.setAlignment(Pos.CENTER);
-        domainsChartsSection.setPadding(new Insets(0, 0, 20, 0));
-        
-        // Get all domains and create spider charts
-        try (PreparedStatement ps = conn.prepareStatement("SELECT id, name FROM domains ORDER BY id");
-             ResultSet rs = ps.executeQuery()) {
-            int domainIndex = 0;
-            while (rs.next() && domainIndex < 4) {
-                int domainId = rs.getInt("id");
-                String domainName = rs.getString("name");
-                VBox domainChart = createDomainSpiderChartWithProgress(conn, domainName, domainId, domainIndex);
-                domainsChartsSection.getChildren().add(domainChart);
-                domainIndex++;
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-        
         // Create the XP progress line chart
         LineChart<String, Number> xpChart = createXpProgressChart(conn);
         VBox lineChartContainer = new VBox(8);
         lineChartContainer.setAlignment(Pos.CENTER);
-        lineChartContainer.setPadding(new Insets(20, 0, 0, 0));
+        lineChartContainer.setPadding(new Insets(16, 0, 0, 0));
         lineChartContainer.getChildren().add(xpChart);
         
         // Main content area
-        VBox mainContent = new VBox(20);
+        VBox mainContent = new VBox(16);
         mainContent.setAlignment(Pos.TOP_CENTER);
-        mainContent.setPadding(new Insets(20));
+        mainContent.setPadding(new Insets(16));
         
         // Add all sections
-        mainContent.getChildren().addAll(topSection, domainsChartsSection, lineChartContainer);
+        mainContent.getChildren().addAll(topSection, lineChartContainer);
         
         // Set the main content as center
         root.setCenter(mainContent);
 
-        Scene sc = new Scene(root, 1000, 800);
+        Scene sc = new Scene(root, 600, 500);
         // apply profile.css if present
         applyCss(sc, "profile.css");
         d.setScene(sc);
@@ -357,6 +334,207 @@ public class ProfilePage {
         }
     }
 
+    /**
+     * Create a single spider chart with 4 domains as axes
+     */
+    private static VBox createSingleDomainSpiderChart(Connection conn) {
+        VBox chartContainer = new VBox(8);
+        chartContainer.setAlignment(Pos.CENTER);
+        chartContainer.setPadding(new Insets(16));
+        chartContainer.setPrefSize(250, 200);
+        
+        // Title
+        Label title = new Label("Domain Overview");
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2d3748; -fx-font-style: italic;");
+        title.setPadding(new Insets(0, 0, 12, 0));
+        title.setAlignment(Pos.CENTER);
+        
+        // Create the spider chart with 4 domains as axes
+        Group spiderChart = createFourDomainSpiderChart(conn);
+        
+        // Make the chart clickable
+        spiderChart.setOnMouseClicked(event -> {
+            showDetailedDomainCharts(conn, ((Node) event.getSource()).getScene().getWindow());
+        });
+        
+        // Add hover effect
+        spiderChart.setOnMouseEntered(event -> {
+            spiderChart.setCursor(javafx.scene.Cursor.HAND);
+        });
+        
+        // Add tooltip
+        Tooltip tooltip = new Tooltip("Click to view detailed domain charts");
+        Tooltip.install(spiderChart, tooltip);
+        
+        chartContainer.getChildren().addAll(title, spiderChart);
+        return chartContainer;
+    }
+    
+    /**
+     * Create a spider chart with 4 domains as axes
+     */
+    private static Group createFourDomainSpiderChart(Connection conn) {
+        Group chart = new Group();
+        
+        // Chart dimensions - smaller
+        double centerX = 125;
+        double centerY = 125;
+        double radius = 80;
+        
+        // Fetch domain data
+        String[] domainNames = new String[4];
+        double[] domainXps = new double[4];
+        
+        try (PreparedStatement ps = conn.prepareStatement("SELECT id, name FROM domains ORDER BY id");
+             ResultSet rs = ps.executeQuery()) {
+            int index = 0;
+            while (rs.next() && index < 4) {
+                domainNames[index] = rs.getString("name");
+                int domainId = rs.getInt("id");
+                
+                // Get total XP for this domain
+                try (PreparedStatement xpPs = conn.prepareStatement("SELECT COALESCE(SUM(xp),0) FROM elements WHERE domain_id = ?")) {
+                    xpPs.setInt(1, domainId);
+                    try (ResultSet xpRs = xpPs.executeQuery()) {
+                        if (xpRs.next()) domainXps[index] = xpRs.getDouble(1);
+                    }
+                }
+                index++;
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        
+        // Find max XP for scaling
+        double maxXp = 0;
+        for (double xp : domainXps) {
+            if (xp > maxXp) maxXp = xp;
+        }
+        if (maxXp == 0) maxXp = 1; // Avoid division by zero
+        
+        // Draw grid circles
+        for (int i = 1; i <= 5; i++) {
+            Circle gridCircle = new Circle(centerX, centerY, radius * i / 5);
+            gridCircle.setFill(Color.TRANSPARENT);
+            gridCircle.setStroke(Color.web("#e2e8f0"));
+            gridCircle.setStrokeWidth(1);
+            chart.getChildren().add(gridCircle);
+        }
+        
+        // Draw axes (4 lines from center to edge)
+        for (int i = 0; i < 4; i++) {
+            double angle = Math.PI / 2 + (i * Math.PI / 2); // Start from top, go clockwise
+            double endX = centerX + radius * Math.cos(angle);
+            double endY = centerY + radius * Math.sin(angle);
+            
+            Line axis = new Line(centerX, centerY, endX, endY);
+            axis.setStroke(Color.web("#cbd5e0"));
+            axis.setStrokeWidth(2);
+            chart.getChildren().add(axis);
+            
+            // Add domain name labels
+            if (i < domainNames.length && domainNames[i] != null) {
+                double labelX = centerX + (radius + 25) * Math.cos(angle);
+                double labelY = centerY + (radius + 25) * Math.sin(angle);
+                
+                Label domainLabel = new Label(domainNames[i]);
+                domainLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #4a5568; -fx-font-weight: 600;");
+                domainLabel.setLayoutX(labelX - 20);
+                domainLabel.setLayoutY(labelY - 8);
+                chart.getChildren().add(domainLabel);
+            }
+        }
+        
+        // Draw data polygon
+        if (domainXps.length > 0) {
+            double[] points = new double[domainXps.length * 2];
+            for (int i = 0; i < domainXps.length; i++) {
+                double angle = Math.PI / 2 + (i * Math.PI / 2);
+                double scaledRadius = radius * (domainXps[i] / maxXp);
+                points[i * 2] = centerX + scaledRadius * Math.cos(angle);
+                points[i * 2 + 1] = centerY + scaledRadius * Math.sin(angle);
+            }
+            
+            Polygon dataPolygon = new Polygon(points);
+            dataPolygon.setFill(Color.web("#667eea", 0.2));
+            dataPolygon.setStroke(Color.web("#667eea"));
+            dataPolygon.setStrokeWidth(2);
+            chart.getChildren().add(dataPolygon);
+            
+            // Add data points
+            for (int i = 0; i < domainXps.length; i++) {
+                double angle = Math.PI / 2 + (i * Math.PI / 2);
+                double scaledRadius = radius * (domainXps[i] / maxXp);
+                double pointX = centerX + scaledRadius * Math.cos(angle);
+                double pointY = centerY + scaledRadius * Math.sin(angle);
+                
+                Circle dataPoint = new Circle(pointX, pointY, 5);
+                dataPoint.setFill(Color.web("#667eea"));
+                dataPoint.setStroke(Color.WHITE);
+                dataPoint.setStrokeWidth(2);
+                chart.getChildren().add(dataPoint);
+            }
+        }
+        
+        // Add center point
+        Circle centerPoint = new Circle(centerX, centerY, 4);
+        centerPoint.setFill(Color.web("#667eea"));
+        chart.getChildren().add(centerPoint);
+        
+        return chart;
+    }
+    
+    /**
+     * Show detailed domain charts in a separate window
+     */
+    private static void showDetailedDomainCharts(Connection conn, Window owner) {
+        Stage detailStage = new Stage();
+        detailStage.initOwner(owner);
+        detailStage.initModality(Modality.APPLICATION_MODAL);
+        detailStage.setTitle("Detailed Domain Charts");
+        
+        BorderPane root = new BorderPane();
+        root.setPadding(new Insets(16));
+        root.getStyleClass().add("root");
+        
+        // Create 4 domain spider charts in a row
+        HBox domainsChartsSection = new HBox(15);
+        domainsChartsSection.setAlignment(Pos.CENTER);
+        domainsChartsSection.setPadding(new Insets(0, 0, 20, 0));
+        
+        // Get all domains and create spider charts
+        try (PreparedStatement ps = conn.prepareStatement("SELECT id, name FROM domains ORDER BY id");
+             ResultSet rs = ps.executeQuery()) {
+            int domainIndex = 0;
+            while (rs.next() && domainIndex < 4) {
+                int domainId = rs.getInt("id");
+                String domainName = rs.getString("name");
+                VBox domainChart = createDomainSpiderChartWithProgress(conn, domainName, domainId, domainIndex);
+                domainsChartsSection.getChildren().add(domainChart);
+                domainIndex++;
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        
+        // Close button
+        Button closeBtn = new Button("Close");
+        closeBtn.getStyleClass().addAll("btn","btn-secondary");
+        closeBtn.setOnAction(ev -> detailStage.close());
+        
+        HBox buttonBox = new HBox();
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+        buttonBox.getChildren().add(closeBtn);
+        
+        root.setCenter(domainsChartsSection);
+        root.setBottom(buttonBox);
+        
+        Scene scene = new Scene(root, 800, 400);
+        applyCss(scene, "profile.css");
+        detailStage.setScene(scene);
+        detailStage.showAndWait();
+    }
+    
     /**
      * Create a line chart showing daily XP progress over time
      */
