@@ -321,6 +321,20 @@ public class ProfilePage {
         VBox badgesSection = createAchievementBadges();
         userInfo.getChildren().add(badgesSection);
         
+        // Add "View All Achievements" button
+        Button viewAllAchievementsBtn = new Button("View All Achievements");
+        viewAllAchievementsBtn.setStyle("-fx-background-color: #3b82f6; " +
+                                      "-fx-text-fill: white; " +
+                                      "-fx-font-size: 12px; " +
+                                      "-fx-font-weight: 600; " +
+                                      "-fx-padding: 8 16; " +
+                                      "-fx-background-radius: 6px; " +
+                                      "-fx-border-radius: 6px; " +
+                                      "-fx-cursor: hand;");
+        viewAllAchievementsBtn.setOnAction(e -> showAllAchievementsWindow(conn));
+        viewAllAchievementsBtn.setPadding(new Insets(8, 0, 0, 0));
+        userInfo.getChildren().add(viewAllAchievementsBtn);
+        
         // Right side: Single spider chart with 4 domains as axes
         VBox spiderChartSection = createSingleDomainSpiderChart(conn);
         
@@ -654,6 +668,160 @@ public class ProfilePage {
         return chartContainer;
     }
     
+    /**
+     * Show all achievements window
+     */
+    private static void showAllAchievementsWindow(Connection conn) {
+        Stage achievementsStage = new Stage();
+        achievementsStage.setTitle("Achievements");
+        achievementsStage.initModality(Modality.APPLICATION_MODAL);
+        achievementsStage.setResizable(false);
+        
+        VBox mainContainer = new VBox(20);
+        mainContainer.setAlignment(Pos.TOP_CENTER);
+        mainContainer.setPadding(new Insets(30, 30, 30, 30));
+        mainContainer.setStyle("-fx-background-color: #1a1a1f;");
+        
+        // Title
+        Label titleLabel = new Label("Achievements");
+        titleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #f1f5f9;");
+        titleLabel.setPadding(new Insets(0, 0, 20, 0));
+        
+        // Achievements grid
+        GridPane achievementsGrid = new GridPane();
+        achievementsGrid.setHgap(20);
+        achievementsGrid.setVgap(20);
+        achievementsGrid.setAlignment(Pos.CENTER);
+        
+        // Define all achievements (3 unlocked + 3 locked)
+        Achievement[] achievements = {
+            new Achievement("🔥", "20 Day Streak", "Consistency Master", "#f59e0b", true, "Complete 20 consecutive days"),
+            new Achievement("🚀", "Getting Started", "First Steps", "#10b981", true, "Complete your first task"),
+            new Achievement("💯", "100 Tasks", "Task Master", "#8b5cf6", true, "Complete 100 total tasks"),
+            new Achievement("🏆", "365 Day Streak", "Legendary", "#f59e0b", false, "Complete 365 consecutive days"),
+            new Achievement("⚡", "1000 Tasks", "Ultimate Master", "#10b981", false, "Complete 1000 total tasks"),
+            new Achievement("🌟", "Perfect Week", "Flawless", "#8b5cf6", false, "Complete all tasks for 7 consecutive days")
+        };
+        
+        // Add achievements to grid
+        for (int i = 0; i < achievements.length; i++) {
+            VBox achievementCard = createAchievementCard(achievements[i]);
+            achievementsGrid.add(achievementCard, i % 3, i / 3);
+        }
+        
+        // Close button
+        Button closeBtn = new Button("Close");
+        closeBtn.setStyle("-fx-background-color: #3b82f6; " +
+                         "-fx-text-fill: white; " +
+                         "-fx-font-size: 14px; " +
+                         "-fx-font-weight: 600; " +
+                         "-fx-padding: 10 24; " +
+                         "-fx-background-radius: 8px; " +
+                         "-fx-border-radius: 8px; " +
+                         "-fx-cursor: hand;");
+        closeBtn.setOnAction(e -> achievementsStage.close());
+        
+        mainContainer.getChildren().addAll(titleLabel, achievementsGrid, closeBtn);
+        
+        Scene scene = new Scene(mainContainer, 600, 500);
+        achievementsStage.setScene(scene);
+        achievementsStage.show();
+    }
+    
+    /**
+     * Achievement data class
+     */
+    private static class Achievement {
+        String emoji, title, subtitle, color, requirement;
+        boolean unlocked;
+        
+        Achievement(String emoji, String title, String subtitle, String color, boolean unlocked, String requirement) {
+            this.emoji = emoji;
+            this.title = title;
+            this.subtitle = subtitle;
+            this.color = color;
+            this.unlocked = unlocked;
+            this.requirement = requirement;
+        }
+    }
+    
+    /**
+     * Create individual achievement card for the window
+     */
+    private static VBox createAchievementCard(Achievement achievement) {
+        VBox card = new VBox(8);
+        card.setAlignment(Pos.CENTER);
+        card.setPadding(new Insets(16, 12, 16, 12));
+        card.setPrefWidth(160);
+        card.setPrefHeight(140);
+        
+        if (achievement.unlocked) {
+            // Unlocked achievement
+            card.setStyle("-fx-background-color: " + achievement.color + "20; " +
+                         "-fx-background-radius: 12px; " +
+                         "-fx-border-color: " + achievement.color + "40; " +
+                         "-fx-border-width: 1px; " +
+                         "-fx-border-radius: 12px;");
+        } else {
+            // Locked achievement
+            card.setStyle("-fx-background-color: #374151; " +
+                         "-fx-background-radius: 12px; " +
+                         "-fx-border-color: #4b5563; " +
+                         "-fx-border-width: 1px; " +
+                         "-fx-border-radius: 12px;");
+        }
+        
+        // Emoji
+        Label emojiLabel = new Label(achievement.emoji);
+        emojiLabel.setStyle("-fx-font-size: 32px;");
+        if (!achievement.unlocked) {
+            emojiLabel.setStyle("-fx-font-size: 32px; -fx-opacity: 0.3;");
+        }
+        
+        // Title
+        Label titleLabel = new Label(achievement.title);
+        if (achievement.unlocked) {
+            titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: " + achievement.color + ";");
+        } else {
+            titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #6b7280;");
+        }
+        
+        // Subtitle
+        Label subtitleLabel = new Label(achievement.subtitle);
+        if (achievement.unlocked) {
+            subtitleLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #9ca3af; -fx-font-weight: 400;");
+        } else {
+            subtitleLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #4b5563; -fx-font-weight: 400;");
+        }
+        
+        // Requirement text
+        Label requirementLabel = new Label(achievement.requirement);
+        requirementLabel.setWrapText(true);
+        requirementLabel.setMaxWidth(140);
+        if (achievement.unlocked) {
+            requirementLabel.setStyle("-fx-font-size: 8px; -fx-text-fill: #6b7280; -fx-font-weight: 400;");
+        } else {
+            requirementLabel.setStyle("-fx-font-size: 8px; -fx-text-fill: #374151; -fx-font-weight: 400;");
+        }
+        
+        // Unlocked overlay
+        if (achievement.unlocked) {
+            Label unlockedLabel = new Label("UNLOCKED");
+            unlockedLabel.setStyle("-fx-font-size: 8px; -fx-font-weight: bold; -fx-text-fill: " + achievement.color + ";");
+            unlockedLabel.setPadding(new Insets(2, 6, 2, 6));
+            unlockedLabel.setStyle(unlockedLabel.getStyle() + 
+                "-fx-background-color: " + achievement.color + "30; " +
+                "-fx-background-radius: 4px; " +
+                "-fx-border-radius: 4px;");
+            
+            card.getChildren().addAll(emojiLabel, titleLabel, subtitleLabel, requirementLabel, unlockedLabel);
+        } else {
+            card.getChildren().addAll(emojiLabel, titleLabel, subtitleLabel, requirementLabel);
+        }
+        
+        return card;
+    }
+
     /**
      * Create achievement badges section
      */
