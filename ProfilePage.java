@@ -695,12 +695,12 @@ public class ProfilePage {
         
         // Define all achievements (3 unlocked + 3 locked)
         Achievement[] achievements = {
-            new Achievement("🔥", "20 Day Streak", "Consistency Master", "#f59e0b", true, "Complete 20 consecutive days"),
-            new Achievement("🚀", "Getting Started", "First Steps", "#10b981", true, "Complete your first task"),
-            new Achievement("💯", "100 Tasks", "Task Master", "#8b5cf6", true, "Complete 100 total tasks"),
-            new Achievement("🏆", "365 Day Streak", "Legendary", "#f59e0b", false, "Complete 365 consecutive days"),
-            new Achievement("⚡", "1000 Tasks", "Ultimate Master", "#10b981", false, "Complete 1000 total tasks"),
-            new Achievement("🌟", "Perfect Week", "Flawless", "#8b5cf6", false, "Complete all tasks for 7 consecutive days")
+            new Achievement("20_day_streak.png", "20 Day Streak", "Consistency Master", "#f59e0b", true, "Complete 20 consecutive days"),
+            new Achievement("getting_started.png", "Getting Started", "First Steps", "#10b981", true, "Complete your first task"),
+            new Achievement("100_tasks.png", "100 Tasks", "Task Master", "#8b5cf6", true, "Complete 100 total tasks"),
+            new Achievement("365_day_streak.png", "365 Day Streak", "Legendary", "#f59e0b", false, "Complete 365 consecutive days"),
+            new Achievement("1000_tasks.png", "1000 Tasks", "Ultimate Master", "#10b981", false, "Complete 1000 total tasks"),
+            new Achievement("perfect_week.png", "Perfect Week", "Flawless", "#8b5cf6", false, "Complete all tasks for 7 consecutive days")
         };
         
         // Add achievements to grid
@@ -732,11 +732,11 @@ public class ProfilePage {
      * Achievement data class
      */
     private static class Achievement {
-        String emoji, title, subtitle, color, requirement;
+        String imageFile, title, subtitle, color, requirement;
         boolean unlocked;
         
-        Achievement(String emoji, String title, String subtitle, String color, boolean unlocked, String requirement) {
-            this.emoji = emoji;
+        Achievement(String imageFile, String title, String subtitle, String color, boolean unlocked, String requirement) {
+            this.imageFile = imageFile;
             this.title = title;
             this.subtitle = subtitle;
             this.color = color;
@@ -771,11 +771,26 @@ public class ProfilePage {
                          "-fx-border-radius: 12px;");
         }
         
-        // Emoji
-        Label emojiLabel = new Label(achievement.emoji);
-        emojiLabel.setStyle("-fx-font-size: 32px;");
+        // Achievement Image
+        ImageView imageView = new ImageView();
+        imageView.setFitWidth(48);
+        imageView.setFitHeight(48);
+        imageView.setPreserveRatio(true);
+        
+        try {
+            // Try to load the PNG image
+            File imageFile = new File(achievement.imageFile);
+            if (imageFile.exists()) {
+                Image image = new Image(new FileInputStream(imageFile));
+                imageView.setImage(image);
+            }
+        } catch (Exception e) {
+            // If image loading fails, imageView will remain blank
+            System.out.println("Could not load image: " + achievement.imageFile);
+        }
+        
         if (!achievement.unlocked) {
-            emojiLabel.setStyle("-fx-font-size: 32px; -fx-opacity: 0.3;");
+            imageView.setOpacity(0.3);
         }
         
         // Title
@@ -814,9 +829,9 @@ public class ProfilePage {
                 "-fx-background-radius: 4px; " +
                 "-fx-border-radius: 4px;");
             
-            card.getChildren().addAll(emojiLabel, titleLabel, subtitleLabel, requirementLabel, unlockedLabel);
+            card.getChildren().addAll(imageView, titleLabel, subtitleLabel, requirementLabel, unlockedLabel);
         } else {
-            card.getChildren().addAll(emojiLabel, titleLabel, subtitleLabel, requirementLabel);
+            card.getChildren().addAll(imageView, titleLabel, subtitleLabel, requirementLabel);
         }
         
         return card;
@@ -840,15 +855,15 @@ public class ProfilePage {
         badgesRow.setAlignment(Pos.CENTER_LEFT);
         
         // 20 Day Streak Badge
-        VBox streakBadge = createBadge("🔥", "20 Day Streak", "Consistency Master", "#f59e0b");
+        VBox streakBadge = createBadge("20_day_streak.png", "20 Day Streak", "Consistency Master", "#f59e0b");
         badgesRow.getChildren().add(streakBadge);
         
         // Getting Started Badge
-        VBox startBadge = createBadge("🚀", "Getting Started", "First Steps", "#10b981");
+        VBox startBadge = createBadge("getting_started.png", "Getting Started", "First Steps", "#10b981");
         badgesRow.getChildren().add(startBadge);
         
         // 100 Tasks Badge
-        VBox tasksBadge = createBadge("💯", "100 Tasks", "Task Master", "#8b5cf6");
+        VBox tasksBadge = createBadge("100_tasks.png", "100 Tasks", "Task Master", "#8b5cf6");
         badgesRow.getChildren().add(tasksBadge);
         
         badgesContainer.getChildren().addAll(badgesTitle, badgesRow);
@@ -858,7 +873,7 @@ public class ProfilePage {
     /**
      * Create individual achievement badge
      */
-    private static VBox createBadge(String emoji, String title, String subtitle, String color) {
+    private static VBox createBadge(String imageFile, String title, String subtitle, String color) {
         VBox badge = new VBox(4);
         badge.setAlignment(Pos.CENTER);
         badge.setPadding(new Insets(8, 12, 8, 12));
@@ -868,9 +883,23 @@ public class ProfilePage {
                       "-fx-border-width: 1px; " +
                       "-fx-border-radius: 8px;");
         
-        // Emoji
-        Label emojiLabel = new Label(emoji);
-        emojiLabel.setStyle("-fx-font-size: 18px;");
+        // Achievement Image
+        ImageView imageView = new ImageView();
+        imageView.setFitWidth(24);
+        imageView.setFitHeight(24);
+        imageView.setPreserveRatio(true);
+        
+        try {
+            // Try to load the PNG image
+            File imageFileObj = new File(imageFile);
+            if (imageFileObj.exists()) {
+                Image image = new Image(new FileInputStream(imageFileObj));
+                imageView.setImage(image);
+            }
+        } catch (Exception e) {
+            // If image loading fails, imageView will remain blank
+            System.out.println("Could not load image: " + imageFile);
+        }
         
         // Title
         Label titleLabel = new Label(title);
@@ -880,7 +909,7 @@ public class ProfilePage {
         Label subtitleLabel = new Label(subtitle);
         subtitleLabel.setStyle("-fx-font-size: 8px; -fx-text-fill: #9ca3af; -fx-font-weight: 400;");
         
-        badge.getChildren().addAll(emojiLabel, titleLabel, subtitleLabel);
+        badge.getChildren().addAll(imageView, titleLabel, subtitleLabel);
         return badge;
     }
 
