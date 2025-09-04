@@ -40,10 +40,10 @@ public class Main {
     "\033[92m","\033[94m","\033[95m","\033[31m","\033[30m"
   };
   private static final String[] GUI_COLORS = {
-    "#ff6b9d", // Pink
-    "#4ecdc4", // Green  
-    "#45b7d1", // Blue
-    "#9b59b6"  // Violet
+    "#f472b6", // Pink
+    "#34d399", // Green  
+    "#60a5fa", // Blue
+    "#a78bfa"  // Purple
   };
   private static final int BADGE_H = 11;
   private static final int BADGE_W = BADGE_H * 2;
