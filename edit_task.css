@@ -1,39 +1,41 @@
 /* ==========================================================================
-   xLog — Edit Task Dialog CSS (JavaFX Compatible)
-   - Modern styling with JavaFX-compatible syntax
-   - Beautiful colors, shadows, and effects
+   xLog — Edit Task Dialog Modern Dark Theme
+   - Consistent with home.css and create_task.css themes
+   - Modern typography and styling
    ========================================================================== */
 
 /* Main dialog container */
 .dialog-main {
-  -fx-background-color: #1a1a28;
+  -fx-background-color: #0a0a0a;
   -fx-background-radius: 20;
   -fx-border-color: rgba(255, 255, 255, 0.1);
   -fx-border-width: 1;
   -fx-border-radius: 20;
   -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.8), 30, 0.0, 0, 15);
+  -fx-font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
 }
 
 /* Dialog header */
 .dialog-header {
-  -fx-background-color: #2a2a3a;
+  -fx-background-color: #111111;
   -fx-background-radius: 20 20 0 0;
-  -fx-padding: 20;
+  -fx-padding: 24;
   -fx-border-color: rgba(255, 255, 255, 0.1);
   -fx-border-width: 0 0 1 0;
 }
 
 .dialog-title {
-  -fx-font-size: 24px;
-  -fx-font-weight: bold;
+  -fx-font-size: 28px;
+  -fx-font-weight: 700;
   -fx-text-fill: #ffffff;
-  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 10, 0.0, 0, 4);
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 8, 0.0, 0, 2);
 }
 
 .dialog-subtitle {
-  -fx-font-size: 14px;
-  -fx-text-fill: #bfc9d3;
-  -fx-padding: 5 0 0 0;
+  -fx-font-size: 16px;
+  -fx-text-fill: #b3b3b3;
+  -fx-padding: 8 0 0 0;
+  -fx-font-weight: 400;
 }
 
 /* Scroll pane */
@@ -43,70 +45,74 @@
 }
 
 .dialog-content {
-  -fx-background-color: #1a1a28;
-  -fx-padding: 20;
+  -fx-background-color: #0a0a0a;
+  -fx-padding: 24;
 }
 
 /* Form sections */
 .form-section {
-  -fx-background-color: rgba(255, 255, 255, 0.05);
-  -fx-background-radius: 12;
+  -fx-background-color: #1e1e1e;
+  -fx-background-radius: 16;
   -fx-border-color: rgba(255, 255, 255, 0.1);
   -fx-border-width: 1;
-  -fx-border-radius: 12;
-  -fx-padding: 16;
-  -fx-spacing: 12;
+  -fx-border-radius: 16;
+  -fx-padding: 20;
+  -fx-spacing: 16;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 8, 0.0, 0, 4);
 }
 
 .section-icon {
-  -fx-font-size: 16px;
-  -fx-text-fill: #89b4fa;
+  -fx-font-size: 18px;
+  -fx-text-fill: #6366f1;
 }
 
 .section-title {
-  -fx-font-size: 16px;
-  -fx-font-weight: bold;
+  -fx-font-size: 18px;
+  -fx-font-weight: 600;
   -fx-text-fill: #ffffff;
 }
 
 /* Text fields */
 .fancy-text-field {
-  -fx-background-color: rgba(255, 255, 255, 0.1);
-  -fx-background-radius: 8;
-  -fx-border-color: rgba(255, 255, 255, 0.2);
-  -fx-border-width: 1;
-  -fx-border-radius: 8;
-  -fx-text-fill: #ffffff;
-  -fx-prompt-text-fill: #9aa6b2;
-  -fx-padding: 12;
-  -fx-font-size: 14px;
-}
-
-.fancy-text-field:focused {
-  -fx-border-color: #89b4fa;
-  -fx-effect: dropshadow(gaussian, rgba(137, 180, 250, 0.3), 10, 0.0, 0, 2);
-}
-
-/* Type cards */
-.type-card {
-  -fx-background-color: rgba(255, 255, 255, 0.05);
+  -fx-background-color: #1a1a1a;
   -fx-background-radius: 12;
   -fx-border-color: rgba(255, 255, 255, 0.1);
   -fx-border-width: 1;
   -fx-border-radius: 12;
-  -fx-padding: 16;
+  -fx-text-fill: #ffffff;
+  -fx-prompt-text-fill: #808080;
+  -fx-padding: 14 16;
+  -fx-font-size: 14px;
+  -fx-font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+}
+
+.fancy-text-field:focused {
+  -fx-border-color: #6366f1;
+  -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.3), 8, 0.0, 0, 4);
+}
+
+/* Type cards */
+.type-card {
+  -fx-background-color: #1a1a1a;
+  -fx-background-radius: 16;
+  -fx-border-color: rgba(255, 255, 255, 0.1);
+  -fx-border-width: 1;
+  -fx-border-radius: 16;
+  -fx-padding: 20;
   -fx-cursor: hand;
+  -fx-transition: all 200ms ease;
 }
 
 .type-card:hover {
-  -fx-background-color: rgba(255, 255, 255, 0.08);
-  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0.0, 0, 4);
+  -fx-background-color: #252525;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 12, 0.0, 0, 6);
+  -fx-translate-y: -2;
 }
 
 .type-card:selected {
-  -fx-background-color: rgba(137, 180, 250, 0.2);
-  -fx-border-color: #89b4fa;
-  -fx-effect: dropshadow(gaussian, rgba(137, 180, 250, 0.4), 15, 0.0, 0, 6);
+  -fx-background-color: rgba(99, 102, 241, 0.2);
+  -fx-border-color: #6366f1;
+  -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.4), 15, 0.0, 0, 6);
 }
 
 .type-radio {
@@ -116,96 +122,122 @@
 
 .type-title {
   -fx-font-size: 16px;
-  -fx-font-weight: bold;
+  -fx-font-weight: 600;
   -fx-text-fill: #ffffff;
 }
 
 .type-desc {
-  -fx-font-size: 12px;
-  -fx-text-fill: #9aa6b2;
-  -fx-padding: 4 0 0 0;
+  -fx-font-size: 13px;
+  -fx-text-fill: #b3b3b3;
+  -fx-padding: 6 0 0 0;
+  -fx-font-weight: 400;
 }
 
 /* Frequency presets */
 .freq-preset {
-  -fx-background-color: rgba(255, 255, 255, 0.05);
-  -fx-background-radius: 8;
+  -fx-background-color: #1a1a1a;
+  -fx-background-radius: 10;
   -fx-border-color: rgba(255, 255, 255, 0.1);
   -fx-border-width: 1;
-  -fx-border-radius: 8;
-  -fx-padding: 8 16;
+  -fx-border-radius: 10;
+  -fx-padding: 10 20;
   -fx-cursor: hand;
+  -fx-text-fill: #ffffff;
+  -fx-font-weight: 500;
+  -fx-transition: all 200ms ease;
 }
 
 .freq-preset:hover {
-  -fx-background-color: rgba(255, 255, 255, 0.08);
+  -fx-background-color: #252525;
+  -fx-translate-y: -1;
 }
 
 .freq-selected {
-  -fx-background-color: rgba(137, 180, 250, 0.2);
-  -fx-border-color: #89b4fa;
+  -fx-background-color: rgba(99, 102, 241, 0.2);
+  -fx-border-color: #6366f1;
+  -fx-text-fill: #6366f1;
 }
 
 /* Combo boxes */
 .fancy-combo-box {
-  -fx-background-color: rgba(255, 255, 255, 0.1);
-  -fx-background-radius: 8;
-  -fx-border-color: rgba(255, 255, 255, 0.2);
+  -fx-background-color: #1a1a1a;
+  -fx-background-radius: 12;
+  -fx-border-color: rgba(255, 255, 255, 0.1);
   -fx-border-width: 1;
-  -fx-border-radius: 8;
+  -fx-border-radius: 12;
   -fx-text-fill: #ffffff;
-  -fx-padding: 8;
+  -fx-padding: 12 16;
+  -fx-font-size: 14px;
+  -fx-font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
 }
 
 .fancy-combo-box:focused {
-  -fx-border-color: #89b4fa;
-  -fx-effect: dropshadow(gaussian, rgba(137, 180, 250, 0.3), 10, 0.0, 0, 2);
+  -fx-border-color: #6366f1;
+  -fx-effect: dropshadow(gaussian, rgba(99, 102, 241, 0.3), 8, 0.0, 0, 4);
 }
 
 .element-label {
   -fx-font-size: 14px;
-  -fx-font-weight: bold;
+  -fx-font-weight: 600;
   -fx-text-fill: #ffffff;
+}
+
+/* Focus toggle */
+.focus-toggle {
+  -fx-text-fill: #ffffff;
+  -fx-font-size: 14px;
+  -fx-font-weight: 500;
 }
 
 /* Footer */
 .dialog-footer {
-  -fx-background-color: #2a2a3a;
+  -fx-background-color: #111111;
   -fx-background-radius: 0 0 20 20;
-  -fx-padding: 20;
-  -fx-spacing: 12;
+  -fx-padding: 24;
+  -fx-spacing: 16;
 }
 
 .btn-cancel {
-  -fx-background-color: #6c757d;
-  -fx-background-radius: 8;
-  -fx-text-fill: #ffffff;
-  -fx-font-weight: bold;
+  -fx-background-color: #1a1a1a;
+  -fx-background-radius: 12;
+  -fx-text-fill: #b3b3b3;
+  -fx-font-weight: 600;
   -fx-padding: 12 24;
   -fx-cursor: hand;
+  -fx-border-color: rgba(255, 255, 255, 0.1);
+  -fx-border-width: 1;
+  -fx-border-radius: 12;
+  -fx-transition: all 200ms ease;
 }
 
 .btn-cancel:hover {
-  -fx-background-color: #5a6268;
-  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0.0, 0, 2);
+  -fx-background-color: #252525;
+  -fx-text-fill: #ffffff;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 8, 0.0, 0, 4);
+  -fx-translate-y: -1;
 }
 
 .btn-save {
-  -fx-background-color: #89b4fa;
-  -fx-background-radius: 8;
+  -fx-background-color: #10b981;
+  -fx-background-radius: 12;
   -fx-text-fill: #ffffff;
-  -fx-font-weight: bold;
+  -fx-font-weight: 700;
   -fx-padding: 12 24;
   -fx-cursor: hand;
+  -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.4), 12, 0.0, 0, 6);
+  -fx-transition: all 200ms ease;
 }
 
 .btn-save:hover {
-  -fx-background-color: #7aa2f7;
-  -fx-effect: dropshadow(gaussian, rgba(137, 180, 250, 0.4), 15, 0.0, 0, 6);
+  -fx-background-color: rgba(16, 185, 129, 0.9);
+  -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.5), 15, 0.0, 0, 8);
+  -fx-translate-y: -2;
 }
 
 .btn-save:disabled {
-  -fx-background-color: #6c757d;
+  -fx-background-color: #1a1a1a;
+  -fx-text-fill: #808080;
   -fx-opacity: 0.5;
   -fx-cursor: default;
+  -fx-effect: none;
 }

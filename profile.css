@@ -1,245 +1,288 @@
-/* Profile Page Styling */
+/* ==========================================================================
+   xLog — Profile Page Modern Dark Theme
+   - Consistent with home.css theme
+   - Modern typography and domain colors
+   ========================================================================== */
 
 .root {
-    -fx-background-color: #1a1a1a;
-    -fx-font-family: "Segoe UI", Arial, sans-serif;
+  -fx-background-color: #0a0a0a;
+  -fx-font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  -fx-font-size: 14px;
+  -fx-text-fill: #ffffff;
 }
 
 .btn {
-    -fx-background-color: #2c2c2c;
-    -fx-text-fill: #ffffff;
-    -fx-border-color: #404040;
-    -fx-border-width: 1px;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
-    -fx-padding: 8px 16px;
-    -fx-font-size: 12px;
+  -fx-background-color: #1a1a1a;
+  -fx-text-fill: #ffffff;
+  -fx-border-color: rgba(255,255,255,0.1);
+  -fx-border-width: 1px;
+  -fx-border-radius: 10px;
+  -fx-background-radius: 10px;
+  -fx-padding: 10px 16px;
+  -fx-font-size: 14px;
+  -fx-font-weight: 600;
   -fx-cursor: hand;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 6, 0.0, 0, 3);
+  -fx-transition: all 200ms ease;
 }
 
 .btn:hover {
-    -fx-background-color: #3c3c3c;
-    -fx-border-color: #505050;
+  -fx-background-color: #252525;
+  -fx-border-color: rgba(255,255,255,0.2);
+  -fx-translate-y: -2;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 8, 0.0, 0, 4);
 }
 
 .btn-secondary {
-    -fx-background-color: #34495e;
-    -fx-border-color: #4a5f7a;
+  -fx-background-color: #6366f1;
+  -fx-border-color: #6366f1;
+  -fx-text-fill: #ffffff;
 }
 
 .btn-secondary:hover {
-    -fx-background-color: #4a5f7a;
-    -fx-border-color: #5a6f8a;
+  -fx-background-color: rgba(99,102,241,0.8);
+  -fx-border-color: rgba(99,102,241,0.8);
 }
 
 /* Profile specific styling */
 .profile-container {
-    -fx-background-color: #1a1a1a;
-    -fx-padding: 20px;
+  -fx-background-color: #0a0a0a;
+  -fx-padding: 24px;
 }
 
 .profile-title {
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #ffffff;
+  -fx-font-size: 28px;
+  -fx-font-weight: 700;
+  -fx-text-fill: #ffffff;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 6, 0.0, 0, 2);
 }
 
 .profile-section {
-    -fx-background-color: #2a2a2a;
-    -fx-border-color: #404040;
-    -fx-border-width: 1px;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
-    -fx-padding: 15px;
-    -fx-spacing: 10px;
+  -fx-background-color: #1e1e1e;
+  -fx-border-color: rgba(255,255,255,0.1);
+  -fx-border-width: 1px;
+  -fx-border-radius: 16px;
+  -fx-background-radius: 16px;
+  -fx-padding: 20px;
+  -fx-spacing: 16px;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 12, 0.0, 0, 6);
 }
 
 .domain-item {
-    -fx-background-color: #2c2c2c;
-    -fx-border-color: #404040;
-    -fx-border-width: 1px;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
-    -fx-padding: 8px;
+  -fx-background-color: #1a1a1a;
+  -fx-border-color: rgba(255,255,255,0.1);
+  -fx-border-width: 1px;
+  -fx-border-radius: 12px;
+  -fx-background-radius: 12px;
+  -fx-padding: 16px;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0.0, 0, 2);
+}
+
+.domain-item:hover {
+  -fx-background-color: #252525;
+  -fx-translate-y: -2;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.0, 0, 4);
 }
 
 .progress-bar {
-    -fx-accent: #3498db;
-    -fx-background-color: #2c2c2c;
-    -fx-border-color: #404040;
-    -fx-border-width: 1px;
-    -fx-border-radius: 6px;
-    -fx-background-radius: 6px;
+  -fx-accent: #6366f1;
+  -fx-background-color: #1a1a1a;
+  -fx-border-color: rgba(255,255,255,0.1);
+  -fx-border-width: 1px;
+  -fx-border-radius: 8px;
+  -fx-background-radius: 8px;
 }
 
 .avatar-container {
-    -fx-background-color: #2a2a2a;
-    -fx-border-color: #404040;
-    -fx-border-width: 2px;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
-    -fx-padding: 10px;
+  -fx-background-color: #1e1e1e;
+  -fx-border-color: rgba(255,255,255,0.1);
+  -fx-border-width: 2px;
+  -fx-border-radius: 16px;
+  -fx-background-radius: 16px;
+  -fx-padding: 16px;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 12, 0.0, 0, 6);
 }
 
 /* Profile text styling */
 .rank-label {
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #3498db;
+  -fx-font-size: 28px;
+  -fx-font-weight: 700;
+  -fx-text-fill: #6366f1;
+  -fx-effect: dropshadow(gaussian, rgba(99,102,241,0.3), 4, 0.0, 0, 2);
 }
 
 .user-label {
-    -fx-font-size: 18px;
-    -fx-text-fill: #ffffff;
-    -fx-font-weight: 500;
+  -fx-font-size: 20px;
+  -fx-text-fill: #ffffff;
+  -fx-font-weight: 600;
 }
 
 .xp-label {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #3498db;
+  -fx-font-size: 20px;
+  -fx-font-weight: 700;
+  -fx-text-fill: #6366f1;
 }
 
 .time-label {
-    -fx-font-size: 14px;
-    -fx-text-fill: #bfc9d3;
-    -fx-font-weight: 500;
+  -fx-font-size: 14px;
+  -fx-text-fill: #b3b3b3;
+  -fx-font-weight: 500;
 }
 
 .domains-title {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #ffffff;
+  -fx-font-size: 20px;
+  -fx-font-weight: 700;
+  -fx-text-fill: #ffffff;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 4, 0.0, 0, 2);
 }
 
 .domain-name {
-    -fx-font-size: 16px;
-    -fx-font-weight: 500;
-    -fx-text-fill: #bfc9d3;
+  -fx-font-size: 16px;
+  -fx-font-weight: 600;
+  -fx-text-fill: #ffffff;
 }
 
 .domain-xp {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #3498db;
+  -fx-font-size: 16px;
+  -fx-font-weight: 700;
+  -fx-text-fill: #6366f1;
 }
 
 /* XP Chart Styling */
 .xp-chart {
-    -fx-background-color: #1a1a1a;
-    -fx-text-fill: #ffffff;
+  -fx-background-color: #0a0a0a;
+  -fx-text-fill: #ffffff;
 }
 
 .xp-chart .chart-title {
-    -fx-text-fill: #ffffff;
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
+  -fx-text-fill: #ffffff;
+  -fx-font-size: 18px;
+  -fx-font-weight: 700;
 }
 
 .xp-chart .axis {
-    -fx-tick-label-fill: #bfc9d3;
-    -fx-tick-label-font-size: 12px;
+  -fx-tick-label-fill: #b3b3b3;
+  -fx-tick-label-font-size: 12px;
 }
 
 .xp-chart .axis-label {
-    -fx-text-fill: #bfc9d3;
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
+  -fx-text-fill: #b3b3b3;
+  -fx-font-size: 14px;
+  -fx-font-weight: 600;
 }
 
 .xp-chart .chart-plot-background {
-    -fx-background-color: #1a1a1a;
+  -fx-background-color: #0a0a0a;
 }
 
 .xp-chart .chart-horizontal-grid-lines {
-    -fx-stroke: #2c2c2c;
-    -fx-stroke-width: 1px;
+  -fx-stroke: #1a1a1a;
+  -fx-stroke-width: 1px;
 }
 
 .xp-chart .chart-vertical-grid-lines {
-    -fx-stroke: #2c2c2c;
-    -fx-stroke-width: 1px;
+  -fx-stroke: #1a1a1a;
+  -fx-stroke-width: 1px;
 }
 
 .xp-chart .chart-series-line {
-    -fx-stroke: #ff6b35;
-    -fx-stroke-width: 3px;
+  -fx-stroke: #6366f1;
+  -fx-stroke-width: 3px;
 }
 
 .xp-chart .chart-line-symbol {
-    -fx-background-color: #ffffff;
-    -fx-background-radius: 5px;
-    -fx-border-color: #ff6b35;
-    -fx-border-width: 2px;
-    -fx-border-radius: 5px;
-    -fx-pref-width: 10px;
-    -fx-pref-height: 10px;
+  -fx-background-color: #ffffff;
+  -fx-background-radius: 5px;
+  -fx-border-color: #6366f1;
+  -fx-border-width: 2px;
+  -fx-border-radius: 5px;
+  -fx-pref-width: 10px;
+  -fx-pref-height: 10px;
 }
 
 /* Color zones for different XP levels */
 .xp-zone-low {
-    -fx-background-color: rgba(128, 128, 128, 0.1);
+  -fx-background-color: rgba(128, 128, 128, 0.1);
 }
 
 .xp-zone-medium {
-    -fx-background-color: rgba(46, 204, 113, 0.1);
+  -fx-background-color: rgba(16, 185, 129, 0.1);
 }
 
 .xp-zone-high {
-    -fx-background-color: rgba(52, 152, 219, 0.1);
+  -fx-background-color: rgba(69, 183, 209, 0.1);
 }
 
 .xp-zone-very-high {
-    -fx-background-color: rgba(155, 89, 182, 0.1);
+  -fx-background-color: rgba(155, 89, 182, 0.1);
 }
 
 .xp-zone-max {
-    -fx-background-color: rgba(231, 76, 60, 0.1);
+  -fx-background-color: rgba(239, 68, 68, 0.1);
 }
 
 /* Spider Chart Styling */
 .spider-chart {
-    -fx-background-color: #1a1a1a;
-    -fx-border-color: #404040;
-    -fx-border-width: 1px;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
-    -fx-padding: 10px;
+  -fx-background-color: #1e1e1e;
+  -fx-border-color: rgba(255,255,255,0.1);
+  -fx-border-width: 1px;
+  -fx-border-radius: 16px;
+  -fx-background-radius: 16px;
+  -fx-padding: 16px;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.0, 0, 4);
 }
 
 .spider-chart-title {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #ffffff;
+  -fx-font-size: 16px;
+  -fx-font-weight: 700;
+  -fx-text-fill: #ffffff;
 }
 
 .spider-chart-element-label {
-    -fx-font-size: 12px;
-    -fx-text-fill: #bfc9d3;
+  -fx-font-size: 12px;
+  -fx-text-fill: #b3b3b3;
+  -fx-font-weight: 500;
 }
 
 .spider-chart-grid {
-    -fx-stroke: #2c2c2c;
-    -fx-stroke-width: 1px;
+  -fx-stroke: #1a1a1a;
+  -fx-stroke-width: 1px;
 }
 
 .spider-chart-axis {
-    -fx-stroke: #404040;
-    -fx-stroke-width: 1px;
+  -fx-stroke: rgba(255,255,255,0.1);
+  -fx-stroke-width: 1px;
 }
 
 .spider-chart-data-polygon {
-    -fx-fill: rgba(255, 107, 53, 0.3);
-    -fx-stroke: #ff6b35;
-    -fx-stroke-width: 2px;
+  -fx-fill: rgba(99,102,241,0.2);
+  -fx-stroke: #6366f1;
+  -fx-stroke-width: 2px;
 }
 
 .spider-chart-data-point {
-    -fx-fill: #ff6b35;
-    -fx-stroke: #ffffff;
-    -fx-stroke-width: 1px;
+  -fx-fill: #6366f1;
+  -fx-stroke: #ffffff;
+  -fx-stroke-width: 1px;
 }
 
 .spider-chart-center {
-    -fx-fill: #ffffff;
+  -fx-fill: #ffffff;
+}
+
+/* Domain-specific progress bar colors */
+.domain-progress-pink {
+  -fx-accent: #ff6b9d;
+}
+
+.domain-progress-green {
+  -fx-accent: #4ecdc4;
+}
+
+.domain-progress-blue {
+  -fx-accent: #45b7d1;
+}
+
+.domain-progress-violet {
+  -fx-accent: #9b59b6;
 }

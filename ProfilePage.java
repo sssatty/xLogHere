@@ -57,15 +57,10 @@ public class ProfilePage {
     // GUI colors (hex) mapped to same rank indexes — used only in GUI
     // NOTE: we will reuse these for domain coloring (first 4 domains will map to first 4 colors)
     private static final String[] GUI_COLORS = {
-        "#505050", // neutral/rookie-ish
-        "#7f8c8d",
-        "#f39c12", // orange
-        "#e74c3c", // red
-        "#2ecc71", // green
-        "#3498db", // blue
-        "#9b59b6", // purple
-        "#e67e22", // dark orange
-        "#34495e"  // dark blue-gray
+        "#ff6b9d", // Pink
+        "#4ecdc4", // Green  
+        "#45b7d1", // Blue
+        "#9b59b6"  // Violet
     };
     
     // Badge size (console badge)
