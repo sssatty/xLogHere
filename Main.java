@@ -1244,6 +1244,13 @@ public class Main {
       createBtn.setDisable(true);
         // gather fields
       String name = nameField.getText().trim();
+      
+      // Special case: Rickroll detection
+      if (name.equalsIgnoreCase("rickroll")) {
+        showRickrollGif(d);
+        createBtn.setDisable(false);
+        return;
+      }
       final String type = typeGroup.getSelectedToggle() != null ? 
         (String) typeGroup.getSelectedToggle().getUserData() : "quick";
       String freqS = freqField.getText().trim();
@@ -1825,6 +1832,68 @@ public class Main {
       applyCss(sc, "edit_task.css");
       d.setScene(sc);
       d.showAndWait();
+    }
+
+    // -------- NEW: Rickroll GIF display --------
+    private void showRickrollGif(Window owner) {
+      Stage gifStage = new Stage();
+      gifStage.initOwner(owner);
+      gifStage.initModality(Modality.APPLICATION_MODAL);
+      gifStage.setTitle("Never Gonna Give You Up!");
+      gifStage.setResizable(false);
+      
+      VBox container = new VBox(20);
+      container.setAlignment(Pos.CENTER);
+      container.setPadding(new Insets(20));
+      container.setStyle("-fx-background-color: #1a1a1f;");
+      
+      // GIF Image
+      ImageView gifView = new ImageView();
+      gifView.setFitWidth(400);
+      gifView.setFitHeight(300);
+      gifView.setPreserveRatio(true);
+      
+      try {
+        File gifFile = new File("resources/roll/rickroll.gif");
+        if (gifFile.exists()) {
+          Image gifImage = new Image(new FileInputStream(gifFile));
+          gifView.setImage(gifImage);
+        } else {
+          // Fallback text if GIF not found
+          Label fallbackLabel = new Label("🎵 Never gonna give you up!\n🎵 Never gonna let you down!\n🎵 Never gonna run around and desert you!");
+          fallbackLabel.setStyle("-fx-font-size: 24px; -fx-text-fill: #f1f5f9; -fx-font-weight: bold; -fx-text-alignment: center;");
+          fallbackLabel.setWrapText(true);
+          container.getChildren().add(fallbackLabel);
+        }
+      } catch (Exception e) {
+        // Fallback text if error loading GIF
+        Label fallbackLabel = new Label("🎵 Never gonna give you up!\n🎵 Never gonna let you down!\n🎵 Never gonna run around and desert you!");
+        fallbackLabel.setStyle("-fx-font-size: 24px; -fx-text-fill: #f1f5f9; -fx-font-weight: bold; -fx-text-alignment: center;");
+        fallbackLabel.setWrapText(true);
+        container.getChildren().add(fallbackLabel);
+      }
+      
+      if (gifView.getImage() != null) {
+        container.getChildren().add(gifView);
+      }
+      
+      // Close button
+      Button closeBtn = new Button("Close");
+      closeBtn.setStyle("-fx-background-color: #3b82f6; " +
+                       "-fx-text-fill: white; " +
+                       "-fx-font-size: 14px; " +
+                       "-fx-font-weight: 600; " +
+                       "-fx-padding: 10 24; " +
+                       "-fx-background-radius: 8px; " +
+                       "-fx-border-radius: 8px; " +
+                       "-fx-cursor: hand;");
+      closeBtn.setOnAction(e -> gifStage.close());
+      
+      container.getChildren().add(closeBtn);
+      
+      Scene scene = new Scene(container, 450, 400);
+      gifStage.setScene(scene);
+      gifStage.show();
     }
 
     // -------- NEW: confirm delete helper --------

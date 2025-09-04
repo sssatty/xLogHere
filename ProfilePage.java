@@ -778,15 +778,15 @@ public class ProfilePage {
         imageView.setPreserveRatio(true);
         
         try {
-            // Try to load the PNG image
-            File imageFile = new File(achievement.imageFile);
+            // Try to load the PNG image from resources/achievements folder
+            File imageFile = new File("resources/achievements/" + achievement.imageFile);
             if (imageFile.exists()) {
                 Image image = new Image(new FileInputStream(imageFile));
                 imageView.setImage(image);
             }
         } catch (Exception e) {
             // If image loading fails, imageView will remain blank
-            System.out.println("Could not load image: " + achievement.imageFile);
+            System.out.println("Could not load image: resources/achievements/" + achievement.imageFile);
         }
         
         if (!achievement.unlocked) {
@@ -890,15 +890,15 @@ public class ProfilePage {
         imageView.setPreserveRatio(true);
         
         try {
-            // Try to load the PNG image
-            File imageFileObj = new File(imageFile);
+            // Try to load the PNG image from resources/achievements folder
+            File imageFileObj = new File("resources/achievements/" + imageFile);
             if (imageFileObj.exists()) {
                 Image image = new Image(new FileInputStream(imageFileObj));
                 imageView.setImage(image);
             }
         } catch (Exception e) {
             // If image loading fails, imageView will remain blank
-            System.out.println("Could not load image: " + imageFile);
+            System.out.println("Could not load image: resources/achievements/" + imageFile);
         }
         
         // Title
