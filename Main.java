@@ -882,10 +882,78 @@ public class Main {
           none.setPadding(new Insets(18));
           tasksBox.getChildren().add(none);
         }
+        
+        // Add completed tasks section
+        addCompletedTasksSection();
+        
       } catch (SQLException ex) {
         ex.printStackTrace();
         Label err = new Label("Failed to load tasks. See console for error.");
         tasksBox.getChildren().add(err);
+      }
+    }
+
+    /**
+     * Add a minimal list of tasks completed today below the to-do list
+     */
+    private void addCompletedTasksSection() {
+      try (PreparedStatement ps = conn.prepareStatement(
+        "SELECT t.id, t.name, t.type, e.name AS maj_name, d.name AS dname, d.id AS did " +
+        "FROM tasks t " +
+        "JOIN elements e ON t.major_elem = e.id " +
+        "JOIN domains d ON e.domain_id = d.id " +
+        "WHERE active=1 AND date(last_done,'localtime') = date('now','localtime') " +
+        "ORDER BY t.id")) {
+        
+        ResultSet rs = ps.executeQuery();
+        boolean hasCompleted = false;
+        
+        while (rs.next()) {
+          if (!hasCompleted) {
+            // Add section header
+            Label completedHeader = new Label("Completed Today");
+            completedHeader.setStyle("-fx-font-size: 16px; -fx-font-weight: 600; -fx-text-fill: #94a3b8; -fx-padding: 16 0 8 0;");
+            tasksBox.getChildren().add(completedHeader);
+            hasCompleted = true;
+          }
+          
+          int id = rs.getInt("id");
+          String name = rs.getString("name");
+          String type = rs.getString("type");
+          String majName = rs.getString("maj_name");
+          String dname = rs.getString("dname");
+          int did = rs.getInt("did");
+          
+          // Create minimal completed task row
+          HBox completedRow = new HBox(8);
+          completedRow.setAlignment(Pos.CENTER_LEFT);
+          completedRow.setPadding(new Insets(4, 0, 4, 0));
+          
+          // Checkmark icon
+          Label checkmark = new Label("✓");
+          checkmark.setStyle("-fx-text-fill: #10b981; -fx-font-weight: bold; -fx-font-size: 14px;");
+          checkmark.setMinWidth(20);
+          
+          // Task name
+          Label taskName = new Label(name);
+          taskName.setStyle("-fx-text-fill: #94a3b8; -fx-font-size: 13px; -fx-font-style: italic;");
+          taskName.setMinWidth(200);
+          
+          // Domain info
+          Label domainInfo = new Label(dname + " • " + majName);
+          domainInfo.setStyle("-fx-text-fill: #64748b; -fx-font-size: 11px;");
+          domainInfo.setMinWidth(150);
+          
+          // Type badge
+          Label typeBadge = new Label(type.toUpperCase());
+          typeBadge.setStyle("-fx-text-fill: #64748b; -fx-font-size: 10px; -fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 6; -fx-padding: 2 6 2 6;");
+          
+          completedRow.getChildren().addAll(checkmark, taskName, domainInfo, typeBadge);
+          tasksBox.getChildren().add(completedRow);
+        }
+        
+      } catch (SQLException ex) {
+        ex.printStackTrace();
       }
     }
 

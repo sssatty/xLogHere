@@ -6,7 +6,7 @@
 
 .root {
   -fx-background-color: #1a1a1f;
-  -fx-font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  -fx-font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
   -fx-font-size: 14px;
   -fx-text-fill: #e2e8f0;
 }

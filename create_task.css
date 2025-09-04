@@ -12,7 +12,7 @@
   -fx-border-width: 1;
   -fx-border-radius: 20;
   -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 30, 0.0, 0, 15);
-  -fx-font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  -fx-font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
 }
 
 /* Dialog header */
@@ -83,7 +83,7 @@
   -fx-prompt-text-fill: #64748b;
   -fx-padding: 14 16;
   -fx-font-size: 14px;
-  -fx-font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  -fx-font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
 }
 
 .fancy-text-field:focused {
@@ -168,7 +168,7 @@
   -fx-text-fill: #f1f5f9;
   -fx-padding: 12 16;
   -fx-font-size: 14px;
-  -fx-font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  -fx-font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
 }
 
 .fancy-combo-box:focused {

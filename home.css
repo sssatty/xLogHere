@@ -7,7 +7,7 @@
 
 /* ---------- Root / Window ----------------------------------------------- */
 .root, .border-pane {
-  -fx-font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  -fx-font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
   -fx-font-size: 14px;
   -fx-background-color: #1a1a1f;
   -fx-text-fill: #e2e8f0;
@@ -235,7 +235,7 @@
   -fx-border-radius: 12;
   -fx-text-fill: #f1f5f9;
   -fx-prompt-text-fill: #64748b;
-  -fx-font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  -fx-font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
   -fx-font-size: 14px;
 }
 
