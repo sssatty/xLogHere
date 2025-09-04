@@ -1499,7 +1499,7 @@ public class Main {
       Label elementsTitle = new Label("Elements");
       elementsTitle.getStyleClass().add("section-title");
       elementsHeader.getChildren().addAll(elementsIcon, elementsTitle);
-      
+      //haha
       // Get elements for dropdowns
       List<String> elements = new ArrayList<>();
       try (PreparedStatement ps = conn.prepareStatement("SELECT name FROM elements ORDER BY name");
