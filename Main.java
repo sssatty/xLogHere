@@ -25,12 +25,6 @@ public class Main {
   private static Connection conn = null;
   // Constants still needed by other parts of the application
   private static final double XP_MAX = 109500.0;
-  
-  // XP Logic Constants
-  private static final double DOMAIN_FATIGUE_FACTOR = 0.7; // 30% reduction for same domain
-  private static final int DOMAIN_FATIGUE_DAYS = 3; // Days to consider for fatigue
-  private static final double XP_DECAY_RATE = 0.05; // 5% decay per week
-  private static final int DECAY_CHECK_DAYS = 7; // Check for decay every 7 days
 
   // ANSI styles (used by console functions - preserved)
   private static final String BOLD   = "\033[1m";
@@ -350,13 +344,6 @@ public class Main {
         String last = rs.getString(6);
         if (last == null) last = "";
 
-        // Apply XP decay first
-        applyXpDecay();
-        
-        // Get domain IDs for fatigue calculation
-        int majDomainId = getDomainIdByElementId(maj);
-        int minDomainId = getDomainIdByElementId(minr);
-        
         int base_maj = 0, base_min = 0;
         if ("quick".equals(type)) { base_maj = 10; base_min = 5; }
         else if ("session".equals(type)) { base_maj = 60; base_min = 30; }
@@ -381,12 +368,6 @@ public class Main {
           LocalDate due = lastDate.plusDays(freq);
           if (LocalDate.now().isAfter(due)) { maj_xp *= 0.6; min_xp *= 0.6; }
         }
-        
-        // Apply domain fatigue
-        double majFatigue = calculateDomainFatigue(majDomainId);
-        double minFatigue = calculateDomainFatigue(minDomainId);
-        maj_xp *= majFatigue;
-        min_xp *= minFatigue;
 
         int imaj = (int)Math.round(maj_xp), imin = (int)Math.round(min_xp);
         try (PreparedStatement up1 = conn.prepareStatement("UPDATE elements SET xp = xp + ? WHERE id = ?")) {
@@ -394,14 +375,6 @@ public class Main {
         }
         try (PreparedStatement up2 = conn.prepareStatement("UPDATE elements SET xp = xp + ? WHERE id = ?")) {
           up2.setInt(1, imin); up2.setInt(2, minr); up2.executeUpdate();
-        }
-        
-        // Log fatigue info if applicable
-        if (majFatigue < 1.0) {
-          System.out.println("Domain fatigue applied: " + String.format("%.0f%%", majFatigue * 100) + " XP for major element");
-        }
-        if (minFatigue < 1.0) {
-          System.out.println("Domain fatigue applied: " + String.format("%.0f%%", minFatigue * 100) + " XP for minor element");
         }
       }
     }
@@ -442,183 +415,6 @@ public class Main {
       up.setInt(1, base_min); up.setInt(2, minId); up.executeUpdate();
     }
     System.out.println("XP granted."); new Scanner(System.in).nextLine();
-  }
-
-  // --- XP Logic Methods -----------------------------------------------------
-  
-  /**
-   * Calculate domain fatigue factor based on recent activity in the same domain
-   */
-  private static double calculateDomainFatigue(int domainId) throws SQLException {
-    // Count tasks completed in this domain in the last DOMAIN_FATIGUE_DAYS days
-    String sql = "SELECT COUNT(*) FROM tasks t " +
-                 "JOIN elements e ON t.major_element = e.id " +
-                 "WHERE e.domain_id = ? AND t.completed_at IS NOT NULL " +
-                 "AND t.completed_at >= datetime('now', '-" + DOMAIN_FATIGUE_DAYS + " days')";
-    
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, domainId);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          int recentTasks = rs.getInt(1);
-          if (recentTasks >= 2) { // If 2+ tasks in same domain recently
-            return DOMAIN_FATIGUE_FACTOR; // Apply fatigue
-          }
-        }
-      }
-    }
-    return 1.0; // No fatigue
-  }
-  
-  /**
-   * Apply XP decay for domains that haven't been worked on recently
-   */
-  private static void applyXpDecay() throws SQLException {
-    // Get all domains and check their last activity
-    String sql = "SELECT d.id, d.name, " +
-                 "MAX(t.completed_at) as last_activity " +
-                 "FROM domains d " +
-                 "LEFT JOIN elements e ON d.id = e.domain_id " +
-                 "LEFT JOIN tasks t ON e.id = t.major_element AND t.completed_at IS NOT NULL " +
-                 "GROUP BY d.id, d.name";
-    
-    try (PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-      
-      while (rs.next()) {
-        int domainId = rs.getInt("id");
-        String domainName = rs.getString("name");
-        String lastActivity = rs.getString("last_activity");
-        
-        // Check if domain hasn't been active for DECAY_CHECK_DAYS or more
-        if (lastActivity != null) {
-          String checkSql = "SELECT julianday('now') - julianday(?)";
-          try (PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
-            checkPs.setString(1, lastActivity);
-            try (ResultSet checkRs = checkPs.executeQuery()) {
-              if (checkRs.next()) {
-                double daysSinceActivity = checkRs.getDouble(1);
-                if (daysSinceActivity >= DECAY_CHECK_DAYS) {
-                  // Apply decay to all elements in this domain
-                  applyDecayToDomain(domainId, domainName, daysSinceActivity);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  
-  /**
-   * Apply XP decay to all elements in a domain
-   */
-  private static void applyDecayToDomain(int domainId, String domainName, double daysSinceActivity) throws SQLException {
-    // Calculate decay factor (more decay for longer inactivity)
-    double weeksSinceActivity = daysSinceActivity / 7.0;
-    double decayFactor = Math.pow(1.0 - XP_DECAY_RATE, weeksSinceActivity);
-    
-    // Get all elements in this domain
-    String sql = "SELECT id, name, xp FROM elements WHERE domain_id = ? AND xp > 0";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, domainId);
-      try (ResultSet rs = ps.executeQuery()) {
-        
-        while (rs.next()) {
-          int elementId = rs.getInt("id");
-          String elementName = rs.getString("name");
-          double currentXp = rs.getDouble("xp");
-          
-          // Calculate new XP after decay
-          double newXp = currentXp * decayFactor;
-          double xpLost = currentXp - newXp;
-          
-          if (xpLost > 0.1) { // Only apply if significant loss
-            // Update element XP
-            try (PreparedStatement updatePs = conn.prepareStatement(
-                "UPDATE elements SET xp = ? WHERE id = ?")) {
-              updatePs.setDouble(1, newXp);
-              updatePs.setInt(2, elementId);
-              updatePs.executeUpdate();
-            }
-            
-            // Log the decay
-            System.out.println("XP Decay: " + elementName + " lost " + 
-                             String.format("%.1f", xpLost) + " XP (domain: " + domainName + ")");
-          }
-        }
-      }
-    }
-  }
-  
-  /**
-   * Enhanced XP granting with domain fatigue and decay logic
-   */
-  private static void grantXpWithLogic(String type, String majEle, String minEle) throws SQLException {
-    // First apply XP decay
-    applyXpDecay();
-    
-    int majId = getElementIdByName(majEle), minId = getElementIdByName(minEle);
-    if (majId < 0 || minId < 0) { 
-      System.out.println("Element not found."); 
-      return; 
-    }
-    
-    // Get domain IDs for fatigue calculation
-    int majDomainId = getDomainIdByElementId(majId);
-    int minDomainId = getDomainIdByElementId(minId);
-    
-    // Calculate base XP
-    int base_maj = 0, base_min = 0;
-    if ("quick".equals(type)) { base_maj = 10; base_min = 5; }
-    else if ("session".equals(type)) { base_maj = 60; base_min = 30; }
-    else if ("grind".equals(type)) { base_maj = 125; base_min = 75; }
-    
-    // Apply focus bonus
-    boolean focus = false;
-    try (PreparedStatement p = conn.prepareStatement("SELECT is_focus FROM elements WHERE id = ?")) {
-      p.setInt(1, majId);
-      try (ResultSet r = p.executeQuery()) { focus = r.next() && r.getInt(1) == 1; }
-    }
-    if (focus) { base_maj += base_maj / 10; base_min += base_min / 10; }
-    
-    // Apply domain fatigue
-    double majFatigue = calculateDomainFatigue(majDomainId);
-    double minFatigue = calculateDomainFatigue(minDomainId);
-    
-    int final_maj = (int)(base_maj * majFatigue);
-    int final_min = (int)(base_min * minFatigue);
-    
-    // Grant XP
-    try (PreparedStatement up = conn.prepareStatement("UPDATE elements SET xp = xp + ? WHERE id = ?")) {
-      up.setInt(1, final_maj); up.setInt(2, majId); up.executeUpdate();
-    }
-    try (PreparedStatement up = conn.prepareStatement("UPDATE elements SET xp = xp + ? WHERE id = ?")) {
-      up.setInt(1, final_min); up.setInt(2, minId); up.executeUpdate();
-    }
-    
-    // Show fatigue info if applicable
-    if (majFatigue < 1.0) {
-      System.out.println("Domain fatigue applied: " + String.format("%.0f%%", majFatigue * 100) + " XP for " + majEle);
-    }
-    if (minFatigue < 1.0) {
-      System.out.println("Domain fatigue applied: " + String.format("%.0f%%", minFatigue * 100) + " XP for " + minEle);
-    }
-    
-    System.out.println("XP granted: " + final_maj + " to " + majEle + ", " + final_min + " to " + minEle);
-  }
-  
-  /**
-   * Get domain ID by element ID
-   */
-  private static int getDomainIdByElementId(int elementId) throws SQLException {
-    try (PreparedStatement ps = conn.prepareStatement("SELECT domain_id FROM elements WHERE id = ?")) {
-      ps.setInt(1, elementId);
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) return rs.getInt(1);
-      }
-    }
-    return -1;
   }
 
   private static void makeFocus(String elemName) throws SQLException {
