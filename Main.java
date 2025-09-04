@@ -838,15 +838,15 @@ public class Main {
           nameLbl.getStyleClass().add("task-name");
           nameLbl.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-font-style: italic; -fx-text-fill: #ffffff;");
 
-          Label meta = new Label("Major: " + majName);
-          meta.getStyleClass().add("task-meta");
-
-          // small focus/star indicator if the major element is focus
+          // Focus and type tags under task name
           Label focusLabel = new Label(isFocus ? "★ Focus" : "");
-          focusLabel.getStyleClass().add("focus-badge");
+          focusLabel.setStyle("-fx-text-fill: #bfc9d3; -fx-font-size: 11px; -fx-background-color: rgba(255,255,255,0.1); -fx-background-radius: 8; -fx-padding: 2 8 2 8;");
           focusLabel.setVisible(isFocus);
 
-          HBox metaRow = new HBox(8, meta, focusLabel);
+          Label typeBadge = new Label(type.toUpperCase());
+          typeBadge.setStyle("-fx-text-fill: #bfc9d3; -fx-font-size: 11px; -fx-background-color: rgba(255,255,255,0.1); -fx-background-radius: 8; -fx-padding: 2 8 2 8;");
+
+          HBox metaRow = new HBox(6, focusLabel, typeBadge);
           metaRow.setAlignment(Pos.CENTER_LEFT);
 
           VBox centerCol = new VBox(2, nameLbl, metaRow);
@@ -855,9 +855,6 @@ public class Main {
           // Right side buttons
           Label streakLbl = new Label((streak > 0 ? "🔥 " + streak : "—"));
           streakLbl.getStyleClass().add("streak-badge");
-
-          Label typeBadge = new Label(type.toUpperCase());
-          typeBadge.getStyleClass().addAll("type-badge", "type-" + type);
 
           Button done = new Button("Complete");
           done.getStyleClass().addAll("btn","btn-complete");
@@ -871,7 +868,7 @@ public class Main {
             }).start();
           });
 
-          HBox rightCol = new HBox(10, streakLbl, typeBadge, done);
+          HBox rightCol = new HBox(10, streakLbl, done);
           rightCol.setAlignment(Pos.CENTER_RIGHT);
 
           Region spacer = new Region();
