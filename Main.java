@@ -2641,7 +2641,7 @@ public class Main {
           });
 
           // Do Today button
-          Button doTodayBtn = new Button("Do Today");
+          Button doTodayBtn = new Button("Add");
           doTodayBtn.getStyleClass().addAll("btn", "btn-primary");
           doTodayBtn.setPrefWidth(80);
           doTodayBtn.setOnAction(ev -> {
