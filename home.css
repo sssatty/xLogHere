@@ -22,13 +22,19 @@
   -fx-background-color: transparent;
 }
 
+/* Logo */
+.logo {
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0.0, 0, 2);
+  -fx-smooth: true;
+}
+
 /* Title */
 #home-title {
-  -fx-font-size: 32px;
+  -fx-font-size: 24px;
   -fx-font-weight: 700;
   -fx-text-fill: #f1f5f9;
   -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 6, 0.0, 0, 2);
-  -fx-padding: 8 16 8 16;
+  -fx-padding: 4 8 4 8;
 }
 
 /* Generic labels */

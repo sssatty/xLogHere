@@ -808,9 +808,33 @@ public class Main {
       root.setPadding(new Insets(20));
       root.getStyleClass().add("root");
 
-      // Top bar: title + create task + view profile buttons
+      // Top bar: logo + title + buttons
+      VBox topLeftSection = new VBox(15);
+      topLeftSection.setAlignment(Pos.CENTER_LEFT);
+      
+      // Logo
+      ImageView logoView = new ImageView();
+      logoView.setFitWidth(140); // Scaled down from 700 to fit nicely
+      logoView.setFitHeight(37); // Scaled down from 185 to maintain aspect ratio
+      logoView.setPreserveRatio(true);
+      logoView.getStyleClass().add("logo");
+      
+      try {
+        File logoFile = new File("resources/menu/xlog.png");
+        if (logoFile.exists()) {
+          Image logoImage = new Image(new FileInputStream(logoFile));
+          logoView.setImage(logoImage);
+        }
+      } catch (Exception e) {
+        System.out.println("Could not load logo: resources/menu/xlog.png");
+      }
+      
+      // Title
       Label title = new Label("Today's Tasks");
       title.setId("home-title");
+      
+      topLeftSection.getChildren().addAll(logoView, title);
+      
       Button createBtn = new Button("Create Task");
       createBtn.getStyleClass().addAll("btn","btn-primary");
       createBtn.setOnAction(e -> {
@@ -870,12 +894,12 @@ public class Main {
         }).start();
       });
 
-      HBox topBar = new HBox(10, title);
-      HBox.setHgrow(title, Priority.ALWAYS);
+      HBox topBar = new HBox(10);
+      HBox.setHgrow(topLeftSection, Priority.ALWAYS);
       topBar.setAlignment(Pos.CENTER_LEFT);
       Region spacer = new Region();
       HBox.setHgrow(spacer, Priority.ALWAYS);
-      topBar.getChildren().addAll(spacer, createBtn, allTasksBtn, profileBtn, leaderboardBtn);
+      topBar.getChildren().addAll(topLeftSection, spacer, createBtn, allTasksBtn, profileBtn, leaderboardBtn);
       root.setTop(topBar);
 
       // Center: scrollable list of tasks
