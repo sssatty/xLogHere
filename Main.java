@@ -190,9 +190,17 @@ public class Main {
         " minor_elem INTEGER NOT NULL REFERENCES elements(id)," +
         " last_done TEXT," +
         " streak INTEGER NOT NULL DEFAULT 0," +
-        " active INTEGER NOT NULL DEFAULT 1" +
+        " active INTEGER NOT NULL DEFAULT 1," +
+        " last_penalty_date TEXT" +
         ");"
       );
+      
+      // Add last_penalty_date column to existing tasks table if it doesn't exist
+      try {
+        st.execute("ALTER TABLE tasks ADD COLUMN last_penalty_date TEXT;");
+      } catch (SQLException e) {
+        // Column already exists, ignore
+      }
       st.execute(
         "CREATE TABLE IF NOT EXISTS xp_log (" +
         " id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -542,11 +550,99 @@ public class Main {
     int dlt = getTaskIdByName("daily_login");
     if (dlt >= 0) completeTaskById(dlt);
 
+    // Check for overdue tasks and apply XP penalties
+    checkAndApplyOverduePenalties();
+
     List<Double> dx = fetchDomainXPs();
     double prod = 1.0;
     for (double x : dx) prod *= x;
     double px = Math.pow(prod, 1.0 / 4.0);
     insertXpLog(dx, px);
+  }
+
+  // -------------------- overdue task penalties ---------------------------
+  private static void checkAndApplyOverduePenalties() throws SQLException {
+    // Get all active tasks that are overdue
+    try (PreparedStatement ps = conn.prepareStatement(
+      "SELECT t.id, t.name, t.type, t.major_elem, t.minor_elem, t.frequency, t.last_done, t.last_penalty_date " +
+      "FROM tasks t " +
+      "WHERE t.active = 1 AND t.frequency > 0 AND t.last_done IS NOT NULL " +
+      "AND date('now','localtime') > date(t.last_done,'+'||t.frequency||' days') " +
+      "AND (t.last_penalty_date IS NULL OR t.last_penalty_date != date('now','localtime'))")) {
+      
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          int taskId = rs.getInt("id");
+          String taskName = rs.getString("name");
+          String type = rs.getString("type");
+          int majorElem = rs.getInt("major_elem");
+          int minorElem = rs.getInt("minor_elem");
+          int frequency = rs.getInt("frequency");
+          String lastDone = rs.getString("last_done");
+          
+          // Calculate XP penalty (same as completion XP but negative)
+          int base_maj = 0, base_min = 0;
+          if ("quick".equals(type)) { base_maj = 10; base_min = 5; }
+          else if ("session".equals(type)) { base_maj = 60; base_min = 30; }
+          else if ("grind".equals(type)) { base_maj = 125; base_min = 75; }
+          
+          // Check if major element is focus
+          boolean focus = false;
+          try (PreparedStatement p2 = conn.prepareStatement("SELECT is_focus FROM elements WHERE id = ?")) {
+            p2.setInt(1, majorElem);
+            try (ResultSet r2 = p2.executeQuery()) {
+              focus = r2.next() && r2.getInt(1) == 1;
+            }
+          }
+          
+          // Apply focus bonus
+          double maj_xp = base_maj, min_xp = base_min;
+          if (focus) { maj_xp *= 1.1; min_xp *= 1.1; }
+          
+          // Apply streak bonus (capped at 20%)
+          int streak = 0;
+          try (PreparedStatement sPs = conn.prepareStatement("SELECT streak FROM tasks WHERE id = ?")) {
+            sPs.setInt(1, taskId);
+            try (ResultSet sRs = sPs.executeQuery()) {
+              if (sRs.next()) streak = sRs.getInt(1);
+            }
+          }
+          int pct = Math.min(streak, 20);
+          maj_xp *= (1 + pct / 100.0);
+          min_xp *= (1 + pct / 100.0);
+          
+          // Apply overdue penalty (40% reduction = 60% of original)
+          maj_xp *= 0.6;
+          min_xp *= 0.6;
+          
+          // Convert to negative values for deduction
+          int maj_penalty = -(int)Math.round(maj_xp);
+          int min_penalty = -(int)Math.round(min_xp);
+          
+          // Apply XP penalties
+          try (PreparedStatement up1 = conn.prepareStatement("UPDATE elements SET xp = xp + ? WHERE id = ?")) {
+            up1.setInt(1, maj_penalty); 
+            up1.setInt(2, majorElem); 
+            up1.executeUpdate();
+          }
+          try (PreparedStatement up2 = conn.prepareStatement("UPDATE elements SET xp = xp + ? WHERE id = ?")) {
+            up2.setInt(1, min_penalty); 
+            up2.setInt(2, minorElem); 
+            up2.executeUpdate();
+          }
+          
+          // Update last penalty date to prevent multiple penalties per day
+          try (PreparedStatement up3 = conn.prepareStatement("UPDATE tasks SET last_penalty_date = ? WHERE id = ?")) {
+            up3.setString(1, nowStr());
+            up3.setInt(2, taskId);
+            up3.executeUpdate();
+          }
+          
+          System.out.println("XP Penalty applied for overdue task: " + taskName + 
+                           " (Major: " + maj_penalty + ", Minor: " + min_penalty + ")");
+        }
+      }
+    }
   }
 
   // -------------------- toggle tasks -----------------------------------
@@ -788,7 +884,7 @@ public class Main {
      */
     private void refreshTasks() {
       tasksBox.getChildren().clear();
-      String q = "SELECT t.id, t.name, t.type, t.streak, e.name AS maj_name, e.is_focus AS is_focus, d.name AS dname, d.id AS did "
+      String q = "SELECT t.id, t.name, t.type, t.streak, t.frequency, t.last_done, e.name AS maj_name, e.is_focus AS is_focus, d.name AS dname, d.id AS did "
                + "FROM tasks t "
                + "JOIN elements e ON t.major_elem = e.id "
                + "JOIN domains d ON e.domain_id = d.id "
@@ -801,10 +897,24 @@ public class Main {
           String name = rs.getString("name");
           String type = rs.getString("type");
           int streak = rs.getInt("streak");
+          int frequency = rs.getInt("frequency");
+          String lastDone = rs.getString("last_done");
           String majName = rs.getString("maj_name");
           boolean isFocus = rs.getInt("is_focus") == 1;
           String dname = rs.getString("dname");
           int did = rs.getInt("did");
+          
+          // Check if task is overdue
+          boolean isOverdue = false;
+          if (lastDone != null && frequency > 0) {
+            try {
+              LocalDate lastDate = LocalDate.parse(lastDone);
+              LocalDate dueDate = lastDate.plusDays(frequency);
+              isOverdue = LocalDate.now().isAfter(dueDate);
+            } catch (Exception e) {
+              // Ignore date parsing errors
+            }
+          }
 
           HBox row = new HBox(12);
           row.getStyleClass().add("task-row");
@@ -831,7 +941,11 @@ public class Main {
           // Center task name and meta info
           Label nameLbl = new Label(name);
           nameLbl.getStyleClass().add("task-name");
-          nameLbl.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-font-style: italic; -fx-text-fill: #ffffff;");
+          if (isOverdue) {
+            nameLbl.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-font-style: italic; -fx-text-fill: #ef4444;");
+          } else {
+            nameLbl.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-font-style: italic; -fx-text-fill: #ffffff;");
+          }
 
           // Focus and type tags under task name
           Label focusLabel = new Label(isFocus ? "★ Focus" : "");
@@ -841,7 +955,12 @@ public class Main {
           Label typeBadge = new Label(type.toUpperCase());
           typeBadge.setStyle("-fx-text-fill: #bfc9d3; -fx-font-size: 11px; -fx-background-color: rgba(255,255,255,0.1); -fx-background-radius: 8; -fx-padding: 2 8 2 8;");
 
-          HBox metaRow = new HBox(6, focusLabel, typeBadge);
+          // Overdue indicator
+          Label overdueLabel = new Label("⚠ OVERDUE");
+          overdueLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-size: 11px; -fx-background-color: rgba(239,68,68,0.2); -fx-background-radius: 8; -fx-padding: 2 8 2 8; -fx-font-weight: bold;");
+          overdueLabel.setVisible(isOverdue);
+
+          HBox metaRow = new HBox(6, focusLabel, typeBadge, overdueLabel);
           metaRow.setAlignment(Pos.CENTER_LEFT);
 
           VBox centerCol = new VBox(2, nameLbl, metaRow);
@@ -2194,6 +2313,10 @@ public class Main {
       initDB();
 
       if (getInt("SELECT COUNT(*) FROM domains") == 0) promptInitialSetup();
+      
+      // Check for overdue tasks and apply penalties on startup
+      checkAndApplyOverduePenalties();
+      
       logTodayXp();
 
       /*
