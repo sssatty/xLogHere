@@ -832,6 +832,23 @@ public class Main {
         }).start();
       });
 
+      Button leaderboardBtn = new Button("Leaderboard");
+      leaderboardBtn.getStyleClass().addAll("btn","btn-secondary");
+      leaderboardBtn.setOnAction(e -> {
+        leaderboardBtn.setDisable(true);
+        new Thread(() -> {
+          try {
+            Platform.runLater(() -> {
+              showLeaderboardWindow(leaderboardBtn.getScene().getWindow());
+              leaderboardBtn.setDisable(false);
+            });
+          } catch (Exception ex) {
+            ex.printStackTrace();
+            Platform.runLater(() -> leaderboardBtn.setDisable(false));
+          }
+        }).start();
+      });
+
       Button allTasksBtn = new Button("All Tasks");
       allTasksBtn.getStyleClass().addAll("btn","btn-secondary");
       allTasksBtn.setOnAction(e -> {
@@ -854,7 +871,7 @@ public class Main {
       topBar.setAlignment(Pos.CENTER_LEFT);
       Region spacer = new Region();
       HBox.setHgrow(spacer, Priority.ALWAYS);
-      topBar.getChildren().addAll(spacer, createBtn, allTasksBtn, profileBtn);
+      topBar.getChildren().addAll(spacer, createBtn, allTasksBtn, profileBtn, leaderboardBtn);
       root.setTop(topBar);
 
       // Center: scrollable list of tasks
@@ -1951,6 +1968,239 @@ public class Main {
       applyCss(sc, "edit_task.css");
       d.setScene(sc);
       d.showAndWait();
+    }
+
+    // -------- NEW: Leaderboard window --------
+    private void showLeaderboardWindow(Window owner) {
+      Stage leaderboardStage = new Stage();
+      leaderboardStage.setTitle("Leaderboard");
+      leaderboardStage.initOwner(owner);
+      leaderboardStage.initModality(Modality.APPLICATION_MODAL);
+      leaderboardStage.setResizable(false);
+      
+      VBox mainContainer = new VBox(20);
+      mainContainer.setAlignment(Pos.TOP_CENTER);
+      mainContainer.setPadding(new Insets(30, 30, 30, 30));
+      mainContainer.setStyle("-fx-background-color: #1a1a1f;");
+      
+      // Title
+      Label titleLabel = new Label("Leaderboard");
+      titleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #f1f5f9;");
+      titleLabel.setPadding(new Insets(0, 0, 20, 0));
+      
+      // Rank selection dropdown
+      HBox rankSelection = new HBox(12);
+      rankSelection.setAlignment(Pos.CENTER);
+      
+      Label rankLabel = new Label("Select Rank:");
+      rankLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #bfc9d3; -fx-font-weight: 600;");
+      
+      ComboBox<String> rankCombo = new ComboBox<>();
+      rankCombo.getItems().addAll("Rookie", "Explorer", "Crafter", "Strategist", "Expert", "Architect", "Elite", "Master", "Legend");
+      rankCombo.setValue("Rookie");
+      rankCombo.setPrefWidth(150);
+      rankCombo.setStyle("-fx-background-color: #2d3748; " +
+                        "-fx-text-fill: #ffffff; " +
+                        "-fx-border-color: #4a5568; " +
+                        "-fx-border-radius: 6px; " +
+                        "-fx-background-radius: 6px; " +
+                        "-fx-cell-size: 30px;");
+      
+      // Style the dropdown list items
+      rankCombo.setCellFactory(listView -> {
+        ListCell<String> cell = new ListCell<String>() {
+          @Override
+          protected void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+              setText(null);
+              setStyle("-fx-background-color: #2d3748;");
+            } else {
+              setText(item);
+              setStyle("-fx-text-fill: #ffffff; " +
+                      "-fx-background-color: #2d3748; " +
+                      "-fx-padding: 8px;");
+            }
+          }
+        };
+        return cell;
+      });
+      
+      // Style the selected text in the combo box
+      rankCombo.setButtonCell(new ListCell<String>() {
+        @Override
+        protected void updateItem(String item, boolean empty) {
+          super.updateItem(item, empty);
+          if (empty || item == null) {
+            setText(null);
+          } else {
+            setText(item);
+            setStyle("-fx-text-fill: #ffffff; " +
+                    "-fx-background-color: #2d3748;");
+          }
+        }
+      });
+      
+      rankSelection.getChildren().addAll(rankLabel, rankCombo);
+      
+      // Leaderboard content
+      VBox leaderboardContent = new VBox(15);
+      leaderboardContent.setAlignment(Pos.TOP_CENTER);
+      leaderboardContent.setPrefWidth(500);
+      
+      // Update leaderboard when rank changes
+      rankCombo.setOnAction(e -> updateLeaderboardContent(leaderboardContent, rankCombo.getValue()));
+      
+      // Initial load
+      updateLeaderboardContent(leaderboardContent, "Rookie");
+      
+      // Close button
+      Button closeBtn = new Button("Close");
+      closeBtn.setStyle("-fx-background-color: #3b82f6; " +
+                       "-fx-text-fill: white; " +
+                       "-fx-font-size: 14px; " +
+                       "-fx-font-weight: 600; " +
+                       "-fx-padding: 10 24; " +
+                       "-fx-background-radius: 8px; " +
+                       "-fx-border-radius: 8px; " +
+                       "-fx-cursor: hand;");
+      closeBtn.setOnAction(e -> leaderboardStage.close());
+      
+      mainContainer.getChildren().addAll(titleLabel, rankSelection, leaderboardContent, closeBtn);
+      
+      Scene scene = new Scene(mainContainer, 600, 500);
+      leaderboardStage.setScene(scene);
+      leaderboardStage.show();
+    }
+    
+    /**
+     * Update leaderboard content based on selected rank
+     */
+    private void updateLeaderboardContent(VBox content, String selectedRank) {
+      content.getChildren().clear();
+      
+      // Get user's current XP and rank
+      double userXp = 0;
+      String userRank = "Rookie";
+      try {
+        userXp = getCurrentProfileXp();
+        userRank = getCurrentRank();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      
+      // Only show Kabir if he belongs to the selected rank
+      if (userRank.equals(selectedRank)) {
+        // Rank header
+        Label rankHeader = new Label(selectedRank + " Leaderboard");
+        String rankColor = getRankColor(selectedRank);
+        rankHeader.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: " + rankColor + ";");
+        rankHeader.setPadding(new Insets(0, 0, 15, 0));
+        content.getChildren().add(rankHeader);
+        
+        // Create leaderboard entry for Kabir
+        HBox leaderboardEntry = createLeaderboardEntry("Kabir", userXp, userRank, selectedRank);
+        content.getChildren().add(leaderboardEntry);
+      } else {
+        // Show empty state for ranks where Kabir doesn't belong
+        Label emptyLabel = new Label("No players in " + selectedRank + " tier yet");
+        emptyLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #6b7280; -fx-font-style: italic;");
+        emptyLabel.setPadding(new Insets(50, 0, 0, 0));
+        content.getChildren().add(emptyLabel);
+      }
+    }
+    
+    /**
+     * Get rank-specific color
+     */
+    private String getRankColor(String rank) {
+      switch (rank) {
+        case "Rookie": return "#94a3af";      // Gray
+        case "Explorer": return "#10b981";    // Green
+        case "Crafter": return "#3b82f6";     // Blue
+        case "Strategist": return "#8b5cf6";  // Purple
+        case "Expert": return "#f59e0b";      // Orange
+        case "Architect": return "#ef4444";   // Red
+        case "Elite": return "#fbbf24";       // Gold
+        case "Master": return "#ec4899";      // Pink
+        case "Legend": return "#ffffff";      // White
+        default: return "#f1f5f9";            // White
+      }
+    }
+    
+    /**
+     * Create a leaderboard entry
+     */
+    private HBox createLeaderboardEntry(String playerName, double xp, String currentRank, String selectedRank) {
+      HBox entry = new HBox(15);
+      entry.setAlignment(Pos.CENTER_LEFT);
+      entry.setPadding(new Insets(12, 16, 12, 16));
+      
+      String rankColor = getRankColor(currentRank);
+      
+      entry.setStyle("-fx-background-color: #2d3748; " +
+                    "-fx-background-radius: 8px; " +
+                    "-fx-border-color: " + rankColor + "40; " +
+                    "-fx-border-width: 2px; " +
+                    "-fx-border-radius: 8px;");
+      
+      // Rank number
+      Label rankNumber = new Label("#1");
+      rankNumber.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: " + rankColor + "; -fx-min-width: 30px;");
+      
+      // Player name
+      Label nameLabel = new Label(playerName);
+      nameLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: 600; -fx-text-fill: " + rankColor + "; -fx-min-width: 120px;");
+      
+      // XP amount
+      Label xpLabel = new Label(String.format("%.0f XP", xp));
+      xpLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #94a3af; -fx-min-width: 80px;");
+      
+      // Rank badge
+      Label rankBadge = new Label(currentRank);
+      rankBadge.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: " + rankColor + "; " +
+                        "-fx-background-color: " + rankColor + "20; " +
+                        "-fx-background-radius: 12px; " +
+                        "-fx-padding: 4 12 4 12;");
+      
+      entry.getChildren().addAll(rankNumber, nameLabel, xpLabel, rankBadge);
+      return entry;
+    }
+    
+    /**
+     * Get current user's profile XP
+     */
+    private double getCurrentProfileXp() throws SQLException {
+      List<Double> domainXps = new ArrayList<>();
+      try (PreparedStatement ps = conn.prepareStatement("SELECT id FROM domains ORDER BY id")) {
+        try (ResultSet rs = ps.executeQuery()) {
+          while (rs.next()) {
+            int domainId = rs.getInt(1);
+            try (PreparedStatement s2 = conn.prepareStatement("SELECT COALESCE(SUM(xp),0) FROM elements WHERE domain_id = ?")) {
+              s2.setInt(1, domainId);
+              try (ResultSet r2 = s2.executeQuery()) {
+                if (r2.next()) domainXps.add(r2.getDouble(1));
+              }
+            }
+          }
+        }
+      }
+      
+      double prod = 1.0;
+      for (double x : domainXps) prod *= x;
+      return Math.pow(prod, 1.0 / 4.0);
+    }
+    
+    /**
+     * Get current user's rank
+     */
+    private String getCurrentRank() throws SQLException {
+      double profileXp = getCurrentProfileXp();
+      double lvlF = Math.sqrt(profileXp / 109500.0) * 8.0;
+      int lvl = Math.min(8, Math.max(0, (int)lvlF));
+      
+      String[] rankNames = {"Rookie", "Explorer", "Crafter", "Strategist", "Expert", "Architect", "Elite", "Master", "Legend"};
+      return rankNames[lvl];
     }
 
     // -------- NEW: Rickroll GIF display --------
