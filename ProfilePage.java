@@ -8,6 +8,9 @@ import javafx.scene.chart.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.shape.*;
+import javafx.scene.paint.*;
+import javafx.scene.Group;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -323,18 +326,40 @@ public class ProfilePage {
         // Create the XP progress chart
         LineChart<String, Number> xpChart = createXpProgressChart(conn);
         
-        // Create a container for the chart
-        VBox chartContainer = new VBox(8);
-        chartContainer.setAlignment(Pos.CENTER);
-        chartContainer.getChildren().add(xpChart);
+        // Create a container for the line chart
+        VBox lineChartContainer = new VBox(8);
+        lineChartContainer.setAlignment(Pos.CENTER);
+        lineChartContainer.getChildren().add(xpChart);
         
-        // Create a scrollable area for the chart
-        ScrollPane chartScroll = new ScrollPane(chartContainer);
-        chartScroll.setFitToWidth(true);
-        chartScroll.setFitToHeight(true);
-        chartScroll.setPrefSize(650, 450);
+        // Create spider chart for first domain
+        VBox spiderChartContainer = new VBox(8);
+        spiderChartContainer.setAlignment(Pos.CENTER);
         
-        // Main content area with profile info and chart
+        // Get first domain for spider chart
+        try (PreparedStatement ps = conn.prepareStatement("SELECT id, name FROM domains ORDER BY id LIMIT 1");
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                int domainId = rs.getInt("id");
+                String domainName = rs.getString("name");
+                VBox spiderChart = createDomainSpiderChart(conn, domainName, domainId);
+                spiderChartContainer.getChildren().add(spiderChart);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        
+        // Create charts section
+        HBox chartsSection = new HBox(20);
+        chartsSection.setAlignment(Pos.CENTER);
+        chartsSection.getChildren().addAll(lineChartContainer, spiderChartContainer);
+        
+        // Create a scrollable area for the charts
+        ScrollPane chartsScroll = new ScrollPane(chartsSection);
+        chartsScroll.setFitToWidth(true);
+        chartsScroll.setFitToHeight(true);
+        chartsScroll.setPrefSize(800, 500);
+        
+        // Main content area with profile info and charts
         VBox mainContent = new VBox(20);
         mainContent.setAlignment(Pos.TOP_CENTER);
         
@@ -343,8 +368,8 @@ public class ProfilePage {
         profileSection.setAlignment(Pos.CENTER_LEFT);
         profileSection.getChildren().addAll(left, meta);
         
-        // Add profile section and chart to main content
-        mainContent.getChildren().addAll(profileSection, chartScroll);
+        // Add profile section and charts to main content
+        mainContent.getChildren().addAll(profileSection, chartsScroll);
         
         // Set the main content as center
         root.setCenter(mainContent);
@@ -429,5 +454,134 @@ public class ProfilePage {
         } catch (Exception e) {
             return dateStr;
         }
+    }
+
+    /**
+     * Create a spider chart for a single domain showing its 4 elements
+     */
+    private static VBox createDomainSpiderChart(Connection conn, String domainName, int domainId) {
+        VBox chartContainer = new VBox(8);
+        chartContainer.setAlignment(Pos.CENTER);
+        chartContainer.setPadding(new Insets(10));
+        
+        // Title
+        Label title = new Label(domainName);
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+        title.setPadding(new Insets(0, 0, 10, 0));
+        
+        // Create the spider chart
+        Group spiderChart = createSpiderChart(conn, domainId);
+        
+        chartContainer.getChildren().addAll(title, spiderChart);
+        return chartContainer;
+    }
+    
+    /**
+     * Create the actual spider chart visualization
+     */
+    private static Group createSpiderChart(Connection conn, int domainId) {
+        Group chart = new Group();
+        
+        // Chart dimensions
+        double centerX = 150;
+        double centerY = 150;
+        double radius = 120;
+        
+        // Fetch domain elements
+        String[] elementNames = new String[4];
+        double[] elementXps = new double[4];
+        
+        try (PreparedStatement ps = conn.prepareStatement(
+            "SELECT name, xp FROM elements WHERE domain_id = ? ORDER BY id")) {
+            ps.setInt(1, domainId);
+            ResultSet rs = ps.executeQuery();
+            
+            int index = 0;
+            while (rs.next() && index < 4) {
+                elementNames[index] = rs.getString("name");
+                elementXps[index] = rs.getDouble("xp");
+                index++;
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        
+        // Find max XP for scaling
+        double maxXp = 0;
+        for (double xp : elementXps) {
+            if (xp > maxXp) maxXp = xp;
+        }
+        if (maxXp == 0) maxXp = 1; // Avoid division by zero
+        
+        // Draw grid circles
+        for (int i = 1; i <= 5; i++) {
+            Circle gridCircle = new Circle(centerX, centerY, radius * i / 5);
+            gridCircle.setFill(Color.TRANSPARENT);
+            gridCircle.setStroke(Color.web("#2c2c2c"));
+            gridCircle.setStrokeWidth(1);
+            chart.getChildren().add(gridCircle);
+        }
+        
+        // Draw axes (4 lines from center to edge)
+        for (int i = 0; i < 4; i++) {
+            double angle = Math.PI / 2 + (i * Math.PI / 2); // Start from top, go clockwise
+            double endX = centerX + radius * Math.cos(angle);
+            double endY = centerY + radius * Math.sin(angle);
+            
+            Line axis = new Line(centerX, centerY, endX, endY);
+            axis.setStroke(Color.web("#404040"));
+            axis.setStrokeWidth(1);
+            chart.getChildren().add(axis);
+            
+            // Add element name labels
+            if (i < elementNames.length && elementNames[i] != null) {
+                double labelX = centerX + (radius + 20) * Math.cos(angle);
+                double labelY = centerY + (radius + 20) * Math.sin(angle);
+                
+                Label elementLabel = new Label(elementNames[i]);
+                elementLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #bfc9d3;");
+                elementLabel.setLayoutX(labelX - 30);
+                elementLabel.setLayoutY(labelY - 8);
+                chart.getChildren().add(elementLabel);
+            }
+        }
+        
+        // Draw data polygon
+        if (elementXps.length > 0) {
+            double[] points = new double[elementXps.length * 2];
+            for (int i = 0; i < elementXps.length; i++) {
+                double angle = Math.PI / 2 + (i * Math.PI / 2);
+                double scaledRadius = radius * (elementXps[i] / maxXp);
+                points[i * 2] = centerX + scaledRadius * Math.cos(angle);
+                points[i * 2 + 1] = centerY + scaledRadius * Math.sin(angle);
+            }
+            
+            Polygon dataPolygon = new Polygon(points);
+            dataPolygon.setFill(Color.web("#ff6b35", 0.3));
+            dataPolygon.setStroke(Color.web("#ff6b35"));
+            dataPolygon.setStrokeWidth(2);
+            chart.getChildren().add(dataPolygon);
+            
+            // Add data points
+            for (int i = 0; i < elementXps.length; i++) {
+                double angle = Math.PI / 2 + (i * Math.PI / 2);
+                double scaledRadius = radius * (elementXps[i] / maxXp);
+                double pointX = centerX + scaledRadius * Math.cos(angle);
+                double pointY = centerY + scaledRadius * Math.sin(angle);
+                
+                Circle dataPoint = new Circle(pointX, pointY, 4);
+                dataPoint.setFill(Color.web("#ff6b35"));
+                dataPoint.setStroke(Color.WHITE);
+                dataPoint.setStrokeWidth(1);
+                chart.getChildren().add(dataPoint);
+            }
+        }
+        
+        // Add center point
+        Circle centerPoint = new Circle(centerX, centerY, 3);
+        centerPoint.setFill(Color.web("#ffffff"));
+        chart.getChildren().add(centerPoint);
+        
+        return chart;
     }
 }

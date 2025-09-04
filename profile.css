@@ -196,3 +196,50 @@
 .xp-zone-max {
     -fx-background-color: rgba(231, 76, 60, 0.1);
 }
+
+/* Spider Chart Styling */
+.spider-chart {
+    -fx-background-color: #1a1a1a;
+    -fx-border-color: #404040;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px;
+}
+
+.spider-chart-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+}
+
+.spider-chart-element-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #bfc9d3;
+}
+
+.spider-chart-grid {
+    -fx-stroke: #2c2c2c;
+    -fx-stroke-width: 1px;
+}
+
+.spider-chart-axis {
+    -fx-stroke: #404040;
+    -fx-stroke-width: 1px;
+}
+
+.spider-chart-data-polygon {
+    -fx-fill: rgba(255, 107, 53, 0.3);
+    -fx-stroke: #ff6b35;
+    -fx-stroke-width: 2px;
+}
+
+.spider-chart-data-point {
+    -fx-fill: #ff6b35;
+    -fx-stroke: #ffffff;
+    -fx-stroke-width: 1px;
+}
+
+.spider-chart-center {
+    -fx-fill: #ffffff;
+}
