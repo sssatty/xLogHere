@@ -111,7 +111,7 @@
 /* ---------- Scroll / Tasks Area --------------------------------------- */
 .scroll-pane.tasks-scroll {
   -fx-background-color: transparent;
-  -fx-padding: 8;
+  -fx-padding: 0;
   -fx-border-color: transparent;
 }
 

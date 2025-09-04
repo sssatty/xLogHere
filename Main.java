@@ -795,14 +795,98 @@ public class Main {
   // -------------------- JavaFX Home GUI (ONLY) --------------------------
   public static class GuiApp extends Application {
     private VBox tasksBox;
+    private Stage mainStage;
 
     @Override
     public void start(Stage primaryStage) {
-      primaryStage.setTitle("xLog — Home");
+      this.mainStage = primaryStage;
+      
+      // Show welcome screen first
+      showWelcomeScreen();
+    }
+    
+    /**
+     * Show welcome screen with logo and start button
+     */
+    private void showWelcomeScreen() {
+      Stage welcomeStage = new Stage();
+      welcomeStage.setTitle("xLog — Welcome");
+      welcomeStage.setMaximized(true);
+      welcomeStage.setFullScreen(false);
+      
+      VBox welcomeContainer = new VBox(30);
+      welcomeContainer.setAlignment(Pos.CENTER);
+      welcomeContainer.setPadding(new Insets(40));
+      welcomeContainer.setStyle("-fx-background-color: #1a1a1f;");
+      
+      // Logo
+      ImageView logoView = new ImageView();
+      logoView.setFitWidth(400); // Larger for welcome screen
+      logoView.setFitHeight(106); // Maintains aspect ratio (700:185)
+      logoView.setPreserveRatio(true);
+      logoView.getStyleClass().add("logo");
+      
+      try {
+        File logoFile = new File("resources/menu/xlog.png");
+        if (logoFile.exists()) {
+          Image logoImage = new Image(new FileInputStream(logoFile));
+          logoView.setImage(logoImage);
+        }
+      } catch (Exception e) {
+        System.out.println("Could not load logo: resources/menu/xlog.png");
+      }
+      
+      // Welcome message
+      String userName = "Kabir"; // Default fallback
+      try {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT name FROM user WHERE id=1")) {
+          try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+              userName = rs.getString(1);
+            }
+          }
+        }
+      } catch (Exception e) {
+        System.out.println("Could not fetch user name: " + e.getMessage());
+      }
+      
+      Label welcomeLabel = new Label("Welcome back " + userName + "!");
+      welcomeLabel.setStyle("-fx-font-size: 28px; " +
+                           "-fx-font-weight: 600; " +
+                           "-fx-text-fill: #f1f5f9; " +
+                           "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 6, 0.0, 0, 2);");
+      
+      // Start button
+      Button startBtn = new Button("Start");
+      startBtn.getStyleClass().addAll("btn", "btn-primary");
+      startBtn.setStyle("-fx-font-size: 20px; " +
+                       "-fx-padding: 16 32 16 32; " +
+                       "-fx-background-color: #3b82f6; " +
+                       "-fx-text-fill: #ffffff; " +
+                       "-fx-background-radius: 12px; " +
+                       "-fx-effect: dropshadow(gaussian, rgba(59,130,246,0.4), 12, 0.0, 0, 6);");
+      startBtn.setOnAction(e -> {
+        welcomeStage.close();
+        showMainDashboard();
+      });
+      
+      welcomeContainer.getChildren().addAll(logoView, welcomeLabel, startBtn);
+      
+      Scene welcomeScene = new Scene(welcomeContainer);
+      applyCss(welcomeScene, "home.css");
+      welcomeStage.setScene(welcomeScene);
+      welcomeStage.show();
+    }
+    
+    /**
+     * Show the main task dashboard
+     */
+    private void showMainDashboard() {
+      mainStage.setTitle("xLog — Home");
       
       // Set full screen
-      primaryStage.setMaximized(true);
-      primaryStage.setFullScreen(false);
+      mainStage.setMaximized(true);
+      mainStage.setFullScreen(false);
 
       BorderPane root = new BorderPane();
       root.setPadding(new Insets(20));
@@ -902,10 +986,19 @@ public class Main {
       topBar.getChildren().addAll(topLeftSection, spacer, createBtn, allTasksBtn, profileBtn, leaderboardBtn);
       root.setTop(topBar);
 
-      // Center: scrollable list of tasks
+      // Center: scrollable list of tasks with background box
+      VBox tasksContainer = new VBox(15);
+      tasksContainer.setPadding(new Insets(20));
+      tasksContainer.setStyle("-fx-background-color: #2a2a35; " +
+                            "-fx-background-radius: 16px; " +
+                            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 12, 0.0, 0, 6);");
+      
       tasksBox = new VBox(10);
       tasksBox.setPadding(new Insets(8));
-      ScrollPane scroll = new ScrollPane(tasksBox);
+      
+      tasksContainer.getChildren().add(tasksBox);
+
+      ScrollPane scroll = new ScrollPane(tasksContainer);
       scroll.setFitToWidth(true);
       scroll.getStyleClass().add("tasks-scroll");
       root.setCenter(scroll);
@@ -914,12 +1007,12 @@ public class Main {
       // apply home.css if present (same folder)
       applyCss(scene, "home.css");
 
-      primaryStage.setScene(scene);
+      mainStage.setScene(scene);
 
       // initial populate
       refreshTasks();
 
-      primaryStage.show();
+      mainStage.show();
     }
 
     /**
@@ -1077,7 +1170,16 @@ public class Main {
             // Add section header
             Label completedHeader = new Label("Completed Today");
             completedHeader.setStyle("-fx-font-size: 16px; -fx-font-weight: 600; -fx-text-fill: #94a3b8; -fx-padding: 16 0 8 0;");
-            tasksBox.getChildren().add(completedHeader);
+            
+            // Create completed tasks container with background
+            VBox completedContainer = new VBox(10);
+            completedContainer.setPadding(new Insets(16));
+            completedContainer.setStyle("-fx-background-color: #2a2a35; " +
+                                     "-fx-background-radius: 12px; " +
+                                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0.0, 0, 4);");
+            
+            completedContainer.getChildren().add(completedHeader);
+            tasksBox.getChildren().add(completedContainer);
             hasCompleted = true;
           }
           
@@ -1113,7 +1215,21 @@ public class Main {
           typeBadge.setStyle("-fx-text-fill: #64748b; -fx-font-size: 10px; -fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 6; -fx-padding: 2 6 2 6;");
           
           completedRow.getChildren().addAll(checkmark, taskName, domainInfo, typeBadge);
-          tasksBox.getChildren().add(completedRow);
+          
+          // Find the completed container and add the row to it
+          for (Node node : tasksBox.getChildren()) {
+            if (node instanceof VBox) {
+              VBox container = (VBox) node;
+              if (container.getChildren().size() > 0 && 
+                  container.getChildren().get(0) instanceof Label) {
+                Label firstChild = (Label) container.getChildren().get(0);
+                if (firstChild.getText() != null && firstChild.getText().contains("Completed Today")) {
+                  container.getChildren().add(completedRow);
+                  break;
+                }
+              }
+            }
+          }
         }
         
       } catch (SQLException ex) {
