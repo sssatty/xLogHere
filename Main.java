@@ -710,12 +710,12 @@ public class Main {
       primaryStage.setTitle("xLog — Home");
 
       BorderPane root = new BorderPane();
-      root.setPadding(new Insets(12));
+      root.setPadding(new Insets(24));
       root.getStyleClass().add("root");
 
       // Top bar: title + create task + view profile buttons
       Label title = new Label("Today's Tasks");
-      title.setId("home-title");
+      title.getStyleClass().add("header-title");
       Button createBtn = new Button("Create Task");
       createBtn.getStyleClass().addAll("btn","btn-primary");
       createBtn.setOnAction(e -> {
@@ -758,9 +758,11 @@ public class Main {
         }).start();
       });
 
-      HBox topBar = new HBox(10, title);
+      HBox topBar = new HBox(20, title);
       HBox.setHgrow(title, Priority.ALWAYS);
       topBar.setAlignment(Pos.CENTER_LEFT);
+      topBar.getStyleClass().add("header-section");
+      topBar.setPadding(new Insets(20));
       Region spacer = new Region();
       HBox.setHgrow(spacer, Priority.ALWAYS);
       topBar.getChildren().addAll(spacer, createBtn, allTasksBtn, profileBtn);
