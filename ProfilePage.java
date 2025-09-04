@@ -225,6 +225,9 @@ public class ProfilePage {
             nextRankXp = (lvl >= 8) ? XP_MAX : Math.pow(((lvl + 1) / 8.0), 2) * XP_MAX;
             progressToNext = (lvl >= 8) ? 1.0 : (profileXp - currentRankXp) / (nextRankXp - currentRankXp);
             
+            // Ensure progress is between 0 and 1
+            progressToNext = Math.max(0.0, Math.min(1.0, progressToNext));
+            
 
             try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT name, CAST(julianday(date(created_at,'+4 years'))-julianday('now','localtime') AS INTEGER) FROM user WHERE id=1");
@@ -265,17 +268,34 @@ public class ProfilePage {
         xpLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: " + hex + "; -fx-font-weight: normal; -fx-font-style: italic;");
         xpLabel.setPadding(new Insets(0,0,6,0));
 
-        // XP bar (blue fill only, no white outer casing)
+        // XP bar (blue fill with dark background track)
         ProgressBar pb = new ProgressBar(progressToNext);
         pb.setPrefWidth(500);
-        pb.setPrefHeight(16);
-        pb.setStyle("-fx-accent: #667EEA; " +
-                   "-fx-background-color: transparent; " +
-                   "-fx-background-radius: 8px; " +
-                   "-fx-border-radius: 8px; " +
-                   "-fx-border-color: transparent; " +
-                   "-fx-border-width: 0px;");
+        pb.setPrefHeight(20);
+        pb.setMinHeight(20);
+        pb.setMaxHeight(20);
+        
+        // Set explicit styling for better visibility
+        pb.setStyle(
+            "-fx-accent: #667EEA;" +
+            "-fx-background-color: #2B2F3B;" +
+            "-fx-background-radius: 10px;" +
+            "-fx-border-radius: 10px;" +
+            "-fx-border-color: #4a5568;" +
+            "-fx-border-width: 1px;"
+        );
+        
         pb.setPadding(new Insets(0,0,4,0));
+        
+        // Debug: Ensure progress bar is visible
+        System.out.println("Debug - progressToNext: " + progressToNext);
+        System.out.println("Debug - profileXp: " + profileXp);
+        System.out.println("Debug - nextRankXp: " + nextRankXp);
+        System.out.println("Debug - lvl: " + lvl);
+        
+        // Force progress bar to be visible
+        pb.setVisible(true);
+        pb.setManaged(true);
         
         // Progress text showing points remaining until next rank
         String progressText;
@@ -296,6 +316,10 @@ public class ProfilePage {
         timeLabel.setPadding(new Insets(0,0,0,0));
 
         userInfo.getChildren().addAll(rankLabel, userLabel, xpLabel, pb, progressLabel, timeLabel);
+        
+        // Achievement badges section
+        VBox badgesSection = createAchievementBadges();
+        userInfo.getChildren().add(badgesSection);
         
         // Right side: Single spider chart with 4 domains as axes
         VBox spiderChartSection = createSingleDomainSpiderChart(conn);
@@ -630,6 +654,68 @@ public class ProfilePage {
         return chartContainer;
     }
     
+    /**
+     * Create achievement badges section
+     */
+    private static VBox createAchievementBadges() {
+        VBox badgesContainer = new VBox(12);
+        badgesContainer.setAlignment(Pos.TOP_LEFT);
+        badgesContainer.setPadding(new Insets(16, 0, 0, 0));
+        
+        // Section title
+        Label badgesTitle = new Label("Achievements");
+        badgesTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 600; -fx-text-fill: #f1f5f9;");
+        badgesTitle.setPadding(new Insets(0, 0, 8, 0));
+        
+        // Badges row
+        HBox badgesRow = new HBox(12);
+        badgesRow.setAlignment(Pos.CENTER_LEFT);
+        
+        // 20 Day Streak Badge
+        VBox streakBadge = createBadge("🔥", "20 Day Streak", "Consistency Master", "#f59e0b");
+        badgesRow.getChildren().add(streakBadge);
+        
+        // Getting Started Badge
+        VBox startBadge = createBadge("🚀", "Getting Started", "First Steps", "#10b981");
+        badgesRow.getChildren().add(startBadge);
+        
+        // 100 Tasks Badge
+        VBox tasksBadge = createBadge("💯", "100 Tasks", "Task Master", "#8b5cf6");
+        badgesRow.getChildren().add(tasksBadge);
+        
+        badgesContainer.getChildren().addAll(badgesTitle, badgesRow);
+        return badgesContainer;
+    }
+    
+    /**
+     * Create individual achievement badge
+     */
+    private static VBox createBadge(String emoji, String title, String subtitle, String color) {
+        VBox badge = new VBox(4);
+        badge.setAlignment(Pos.CENTER);
+        badge.setPadding(new Insets(8, 12, 8, 12));
+        badge.setStyle("-fx-background-color: " + color + "20; " +
+                      "-fx-background-radius: 8px; " +
+                      "-fx-border-color: " + color + "40; " +
+                      "-fx-border-width: 1px; " +
+                      "-fx-border-radius: 8px;");
+        
+        // Emoji
+        Label emojiLabel = new Label(emoji);
+        emojiLabel.setStyle("-fx-font-size: 18px;");
+        
+        // Title
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 10px; -fx-font-weight: 600; -fx-text-fill: " + color + ";");
+        
+        // Subtitle
+        Label subtitleLabel = new Label(subtitle);
+        subtitleLabel.setStyle("-fx-font-size: 8px; -fx-text-fill: #9ca3af; -fx-font-weight: 400;");
+        
+        badge.getChildren().addAll(emojiLabel, titleLabel, subtitleLabel);
+        return badge;
+    }
+
     /**
      * Create a spider chart with progress bar for a domain
      */
