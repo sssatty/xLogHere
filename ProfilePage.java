@@ -235,146 +235,108 @@ public class ProfilePage {
             ex.printStackTrace();
         }
 
-        // left: rank name, username, xp and progress
+        // Top section: User info (left) and Avatar (right)
+        HBox topSection = new HBox(30);
+        topSection.setAlignment(Pos.CENTER_LEFT);
+        topSection.setPadding(new Insets(0, 0, 20, 0));
+        
+        // Left side: User information with proper focus levels
+        VBox userInfo = new VBox(8);
+        userInfo.setAlignment(Pos.TOP_LEFT);
+        
         String hex = GUI_COLORS[Math.max(0, Math.min(GUI_COLORS.length-1, lvl))];
         
+        // RANK (mid focus) - smaller, color coded
         Label rankLabel = new Label(rank);
-        rankLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: " + hex + ";");
-        rankLabel.setPadding(new Insets(0,0,8,0));
+        rankLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: " + hex + "; -fx-font-style: italic;");
+        rankLabel.setPadding(new Insets(0,0,4,0));
 
+        // NAME (High focus) - largest, bold, white
         Label userLabel = new Label(user);
-        userLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #ffffff; -fx-font-weight: 500;");
+        userLabel.setStyle("-fx-font-size: 28px; -fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-style: italic;");
         userLabel.setPadding(new Insets(0,0,8,0));
 
+        // XP (low focus) - smaller, color coded
         Label xpLabel = new Label("XP: " + ((int)profileXp));
-        xpLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: " + hex + "; -fx-font-weight: bold;");
-        xpLabel.setPadding(new Insets(0,0,12,0));
+        xpLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: " + hex + "; -fx-font-weight: normal; -fx-font-style: italic;");
+        xpLabel.setPadding(new Insets(0,0,6,0));
 
-        // progress bar
+        // XP bar (low focus) - smaller
         ProgressBar pb = new ProgressBar(frac);
-        pb.setPrefWidth(250);
-        pb.setPrefHeight(12);
-        pb.setStyle("-fx-accent: " + hex + "; -fx-background-color: #2c2c2c; -fx-border-color: #404040; -fx-border-width: 1px; -fx-border-radius: 6px; -fx-background-radius: 6px;");
-        pb.setPadding(new Insets(8,0,8,0));
+        pb.setPrefWidth(200);
+        pb.setPrefHeight(8);
+        pb.setStyle("-fx-accent: " + hex + "; -fx-background-color: #2c2c2c; -fx-border-color: #404040; -fx-border-width: 1px; -fx-border-radius: 4px; -fx-background-radius: 4px;");
+        pb.setPadding(new Insets(0,0,6,0));
 
+        // Days left (low focus) - smallest
         Label timeLabel = new Label("Time left: " + daysLeft + " days");
-        timeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #bfc9d3; -fx-font-weight: 500;");
-        timeLabel.setPadding(new Insets(8,0,0,0));
+        timeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #bfc9d3; -fx-font-weight: normal; -fx-font-style: italic;");
+        timeLabel.setPadding(new Insets(0,0,0,0));
 
-        left.getChildren().addAll(rankLabel, userLabel, xpLabel, pb, timeLabel);
-
-        // right: domain breakdown
-        VBox domains = new VBox(8);
-        domains.setAlignment(Pos.TOP_LEFT);
-        domains.setPadding(new Insets(0,0,0,20));
+        userInfo.getChildren().addAll(rankLabel, userLabel, xpLabel, pb, timeLabel);
         
-        Label domainsTitle = new Label("Domains");
-        domainsTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
-        domainsTitle.setPadding(new Insets(0,0,12,0));
-        domains.getChildren().add(domainsTitle);
+        // Right side: Avatar placeholder
+        VBox avatarSection = new VBox(8);
+        avatarSection.setAlignment(Pos.CENTER);
+        
+        // Avatar placeholder
+        Label avatarPlaceholder = new Label("👤");
+        avatarPlaceholder.setStyle("-fx-font-size: 80px; -fx-text-fill: #404040;");
+        avatarPlaceholder.setPrefSize(120, 120);
+        avatarPlaceholder.setStyle("-fx-font-size: 80px; -fx-text-fill: #404040; -fx-background-color: #2c2c2c; -fx-border-color: #404040; -fx-border-width: 2px; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-alignment: center;");
+        
+        avatarSection.getChildren().add(avatarPlaceholder);
+        
+        topSection.getChildren().addAll(userInfo, avatarSection);
 
-        for (int i = 0; i < 4; ++i) {
-            if (domainNames[i] != null && !domainNames[i].isEmpty()) {
-                HBox domainRow = new HBox(12);
-                domainRow.setAlignment(Pos.CENTER_LEFT);
-                domainRow.setPadding(new Insets(4,0,4,0));
-                
-                Label dn = new Label(domainNames[i]);
-                dn.setStyle("-fx-font-size: 16px; -fx-font-weight: 500; -fx-text-fill: #bfc9d3;");
-                Label v = new Label(String.valueOf((int)domainXps[i]));
-                v.setStyle("-fx-font-size: 16px; -fx-text-fill: " + GUI_COLORS[Math.max(0, Math.min(GUI_COLORS.length-1, lvl))] + "; -fx-font-weight: bold;");
-                Region rgn = new Region();
-                HBox.setHgrow(rgn, Priority.ALWAYS);
-                domainRow.getChildren().addAll(dn, rgn, v);
-                domains.getChildren().add(domainRow);
-            }
-        }
-
-        right.getChildren().add(domains);
-
-        // meta: avatar placeholder + close button
-        VBox meta = new VBox(8);
-        meta.setAlignment(Pos.CENTER);
-
-        // attempt to load avatar.png from current folder (optional)
-        try {
-            File f = new File("avatar.png");
-            if (f.exists()) {
-                Image img = new Image(new FileInputStream(f), 160, 160, true, true);
-                ImageView iv = new ImageView(img);
-                iv.setFitWidth(160);
-                iv.setFitHeight(160);
-                iv.setPreserveRatio(true);
-                meta.getChildren().add(iv);
-            } else {
-                // placeholder rectangle using a Label for minimal look
-                Label placeholder = new Label();
-                placeholder.setPrefSize(160, 120);
-                placeholder.setStyle("-fx-border-color: #2b2b2b; -fx-background-color: #1b1b1b;");
-                meta.getChildren().add(placeholder);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        // Add a "Close" button
+        // Add a "Close" button to the top section
         Button close = new Button("Close");
         close.getStyleClass().addAll("btn","btn-secondary");
         close.setOnAction(ev -> d.close());
-        meta.getChildren().add(close);
+        close.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-font-style: italic;");
+        
+        // Add close button to avatar section
+        avatarSection.getChildren().add(close);
 
-        // Create the XP progress chart
-        LineChart<String, Number> xpChart = createXpProgressChart(conn);
+        // Create 4 domain spider charts in a row
+        HBox domainsChartsSection = new HBox(15);
+        domainsChartsSection.setAlignment(Pos.CENTER);
+        domainsChartsSection.setPadding(new Insets(0, 0, 20, 0));
         
-        // Create a container for the line chart
-        VBox lineChartContainer = new VBox(8);
-        lineChartContainer.setAlignment(Pos.CENTER);
-        lineChartContainer.getChildren().add(xpChart);
-        
-        // Create spider chart for first domain
-        VBox spiderChartContainer = new VBox(8);
-        spiderChartContainer.setAlignment(Pos.CENTER);
-        
-        // Get first domain for spider chart
-        try (PreparedStatement ps = conn.prepareStatement("SELECT id, name FROM domains ORDER BY id LIMIT 1");
+        // Get all domains and create spider charts
+        try (PreparedStatement ps = conn.prepareStatement("SELECT id, name FROM domains ORDER BY id");
              ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
+            int domainIndex = 0;
+            while (rs.next() && domainIndex < 4) {
                 int domainId = rs.getInt("id");
                 String domainName = rs.getString("name");
-                VBox spiderChart = createDomainSpiderChart(conn, domainName, domainId);
-                spiderChartContainer.getChildren().add(spiderChart);
+                VBox domainChart = createDomainSpiderChartWithProgress(conn, domainName, domainId, domainIndex);
+                domainsChartsSection.getChildren().add(domainChart);
+                domainIndex++;
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
         
-        // Create charts section
-        HBox chartsSection = new HBox(20);
-        chartsSection.setAlignment(Pos.CENTER);
-        chartsSection.getChildren().addAll(lineChartContainer, spiderChartContainer);
+        // Create the XP progress line chart
+        LineChart<String, Number> xpChart = createXpProgressChart(conn);
+        VBox lineChartContainer = new VBox(8);
+        lineChartContainer.setAlignment(Pos.CENTER);
+        lineChartContainer.setPadding(new Insets(20, 0, 0, 0));
+        lineChartContainer.getChildren().add(xpChart);
         
-        // Create a scrollable area for the charts
-        ScrollPane chartsScroll = new ScrollPane(chartsSection);
-        chartsScroll.setFitToWidth(true);
-        chartsScroll.setFitToHeight(true);
-        chartsScroll.setPrefSize(800, 500);
-        
-        // Main content area with profile info and charts
+        // Main content area
         VBox mainContent = new VBox(20);
         mainContent.setAlignment(Pos.TOP_CENTER);
+        mainContent.setPadding(new Insets(20));
         
-        // Top section with profile info
-        HBox profileSection = new HBox(20);
-        profileSection.setAlignment(Pos.CENTER_LEFT);
-        profileSection.getChildren().addAll(left, meta);
-        
-        // Add profile section and charts to main content
-        mainContent.getChildren().addAll(profileSection, chartsScroll);
+        // Add all sections
+        mainContent.getChildren().addAll(topSection, domainsChartsSection, lineChartContainer);
         
         // Set the main content as center
         root.setCenter(mainContent);
 
-        Scene sc = new Scene(root, 800, 600);
+        Scene sc = new Scene(root, 1000, 800);
         // apply profile.css if present
         applyCss(sc, "profile.css");
         d.setScene(sc);
@@ -477,15 +439,70 @@ public class ProfilePage {
     }
     
     /**
+     * Create a spider chart with progress bar for a domain
+     */
+    private static VBox createDomainSpiderChartWithProgress(Connection conn, String domainName, int domainId, int domainIndex) {
+        VBox chartContainer = new VBox(8);
+        chartContainer.setAlignment(Pos.CENTER);
+        chartContainer.setPadding(new Insets(10));
+        chartContainer.setPrefSize(180, 220);
+        
+        // Title with bold italic styling
+        Label title = new Label(domainName);
+        title.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #ffffff; -fx-font-style: italic;");
+        title.setPadding(new Insets(0, 0, 8, 0));
+        title.setAlignment(Pos.CENTER);
+        
+        // Create the spider chart (smaller)
+        Group spiderChart = createSpiderChart(conn, domainId, 100); // Smaller radius
+        
+        // Calculate domain completion percentage
+        double domainXp = 0;
+        try (PreparedStatement ps = conn.prepareStatement("SELECT COALESCE(SUM(xp),0) FROM elements WHERE domain_id = ?")) {
+            ps.setInt(1, domainId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) domainXp = rs.getDouble(1);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        
+        // Calculate progress (assuming max XP per domain is 1000 for now)
+        double maxDomainXp = 1000.0;
+        double progress = Math.min(domainXp / maxDomainXp, 1.0);
+        
+        // Progress bar
+        ProgressBar progressBar = new ProgressBar(progress);
+        progressBar.setPrefWidth(150);
+        progressBar.setPrefHeight(6);
+        String domainColor = GUI_COLORS[Math.max(0, domainIndex % GUI_COLORS.length)];
+        progressBar.setStyle("-fx-accent: " + domainColor + "; -fx-background-color: #2c2c2c; -fx-border-color: #404040; -fx-border-width: 1px; -fx-border-radius: 3px; -fx-background-radius: 3px;");
+        
+        // Progress label
+        Label progressLabel = new Label(String.format("%.0f%%", progress * 100));
+        progressLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: " + domainColor + "; -fx-font-weight: bold; -fx-font-style: italic;");
+        progressLabel.setAlignment(Pos.CENTER);
+        
+        chartContainer.getChildren().addAll(title, spiderChart, progressBar, progressLabel);
+        return chartContainer;
+    }
+    
+    /**
      * Create the actual spider chart visualization
      */
     private static Group createSpiderChart(Connection conn, int domainId) {
+        return createSpiderChart(conn, domainId, 120);
+    }
+    
+    /**
+     * Create the actual spider chart visualization with custom radius
+     */
+    private static Group createSpiderChart(Connection conn, int domainId, double radius) {
         Group chart = new Group();
         
         // Chart dimensions
-        double centerX = 150;
-        double centerY = 150;
-        double radius = 120;
+        double centerX = radius + 20;
+        double centerY = radius + 20;
         
         // Fetch domain elements
         String[] elementNames = new String[4];
