@@ -4,6 +4,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.chart.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -17,6 +18,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -174,6 +177,8 @@ public class ProfilePage {
         root.setPadding(new Insets(12));
 
         VBox left = new VBox(8);
+
+        
         left.setAlignment(Pos.TOP_LEFT);
 
         VBox right = new VBox(8);
@@ -228,45 +233,53 @@ public class ProfilePage {
         }
 
         // left: rank name, username, xp and progress
-        Label rankLabel = new Label(rank);
-        rankLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        rankLabel.setPadding(new Insets(0,0,4,0));
-        // apply GUI color if available
         String hex = GUI_COLORS[Math.max(0, Math.min(GUI_COLORS.length-1, lvl))];
-        rankLabel.setStyle(rankLabel.getStyle() + "-fx-text-fill: " + hex + ";");
+        
+        Label rankLabel = new Label(rank);
+        rankLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: " + hex + ";");
+        rankLabel.setPadding(new Insets(0,0,8,0));
 
         Label userLabel = new Label(user);
-        userLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #bfc9d3;");
+        userLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #ffffff; -fx-font-weight: 500;");
+        userLabel.setPadding(new Insets(0,0,8,0));
 
         Label xpLabel = new Label("XP: " + ((int)profileXp));
-        xpLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: " + hex + "; -fx-font-weight: bold;");
+        xpLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: " + hex + "; -fx-font-weight: bold;");
+        xpLabel.setPadding(new Insets(0,0,12,0));
 
         // progress bar
         ProgressBar pb = new ProgressBar(frac);
-        pb.setPrefWidth(200);
-        pb.setStyle("-fx-accent: " + hex + ";");
+        pb.setPrefWidth(250);
+        pb.setPrefHeight(12);
+        pb.setStyle("-fx-accent: " + hex + "; -fx-background-color: #2c2c2c; -fx-border-color: #404040; -fx-border-width: 1px; -fx-border-radius: 6px; -fx-background-radius: 6px;");
+        pb.setPadding(new Insets(8,0,8,0));
 
         Label timeLabel = new Label("Time left: " + daysLeft + " days");
-        timeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #bfc9d3;");
+        timeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #bfc9d3; -fx-font-weight: 500;");
+        timeLabel.setPadding(new Insets(8,0,0,0));
 
         left.getChildren().addAll(rankLabel, userLabel, xpLabel, pb, timeLabel);
 
         // right: domain breakdown
-        VBox domains = new VBox(4);
+        VBox domains = new VBox(8);
         domains.setAlignment(Pos.TOP_LEFT);
+        domains.setPadding(new Insets(0,0,0,20));
+        
         Label domainsTitle = new Label("Domains");
-        domainsTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #bfc9d3;");
+        domainsTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+        domainsTitle.setPadding(new Insets(0,0,12,0));
         domains.getChildren().add(domainsTitle);
 
         for (int i = 0; i < 4; ++i) {
             if (domainNames[i] != null && !domainNames[i].isEmpty()) {
-                HBox domainRow = new HBox(8);
+                HBox domainRow = new HBox(12);
                 domainRow.setAlignment(Pos.CENTER_LEFT);
+                domainRow.setPadding(new Insets(4,0,4,0));
                 
                 Label dn = new Label(domainNames[i]);
-                dn.setStyle("-fx-font-weight: bold;");
+                dn.setStyle("-fx-font-size: 16px; -fx-font-weight: 500; -fx-text-fill: #bfc9d3;");
                 Label v = new Label(String.valueOf((int)domainXps[i]));
-                v.setStyle("-fx-text-fill: " + GUI_COLORS[Math.max(0, Math.min(GUI_COLORS.length-1, lvl))] + "; -fx-font-weight: bold;");
+                v.setStyle("-fx-font-size: 16px; -fx-text-fill: " + GUI_COLORS[Math.max(0, Math.min(GUI_COLORS.length-1, lvl))] + "; -fx-font-weight: bold;");
                 Region rgn = new Region();
                 HBox.setHgrow(rgn, Priority.ALWAYS);
                 domainRow.getChildren().addAll(dn, rgn, v);
@@ -307,13 +320,36 @@ public class ProfilePage {
         close.setOnAction(ev -> d.close());
         meta.getChildren().add(close);
 
-        // layout
-        top.getChildren().addAll(left, right);
-        right.getChildren().add(meta);
+        // Create the XP progress chart
+        LineChart<String, Number> xpChart = createXpProgressChart(conn);
+        
+        // Create a container for the chart
+        VBox chartContainer = new VBox(8);
+        chartContainer.setAlignment(Pos.CENTER);
+        chartContainer.getChildren().add(xpChart);
+        
+        // Create a scrollable area for the chart
+        ScrollPane chartScroll = new ScrollPane(chartContainer);
+        chartScroll.setFitToWidth(true);
+        chartScroll.setFitToHeight(true);
+        chartScroll.setPrefSize(650, 450);
+        
+        // Main content area with profile info and chart
+        VBox mainContent = new VBox(20);
+        mainContent.setAlignment(Pos.TOP_CENTER);
+        
+        // Top section with profile info
+        HBox profileSection = new HBox(20);
+        profileSection.setAlignment(Pos.CENTER_LEFT);
+        profileSection.getChildren().addAll(left, meta);
+        
+        // Add profile section and chart to main content
+        mainContent.getChildren().addAll(profileSection, chartScroll);
+        
+        // Set the main content as center
+        root.setCenter(mainContent);
 
-        root.setCenter(new HBox(12, left, meta));
-
-        Scene sc = new Scene(root, 620, 320);
+        Scene sc = new Scene(root, 800, 600);
         // apply profile.css if present
         applyCss(sc, "profile.css");
         d.setScene(sc);
@@ -331,6 +367,67 @@ public class ProfilePage {
             }
         } catch (Exception ex) {
             // CSS file not found or error - continue without styling
+        }
+    }
+
+    /**
+     * Create a line chart showing daily XP progress over time
+     */
+    private static LineChart<String, Number> createXpProgressChart(Connection conn) {
+        // Create the chart
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        xAxis.setLabel("Date");
+        yAxis.setLabel("Profile XP");
+        
+        LineChart<String, Number> lineChart = new LineChart<>(xAxis, yAxis);
+        lineChart.setTitle("Daily XP Progress");
+        lineChart.setPrefSize(600, 400);
+        lineChart.setLegendVisible(false);
+        
+        // Style the chart
+        lineChart.getStylesheets().add("file:profile.css");
+        lineChart.getStyleClass().add("xp-chart");
+        
+        // Fetch data from xp_log table
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Profile XP");
+        
+        try (PreparedStatement ps = conn.prepareStatement(
+            "SELECT date, profile_xp FROM xp_log ORDER BY date")) {
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                String date = rs.getString("date");
+                double xp = rs.getDouble("profile_xp");
+                
+                // Format date for display (show month/year)
+                String formattedDate = formatDateForChart(date);
+                series.getData().add(new XYChart.Data<>(formattedDate, xp));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        
+        lineChart.getData().add(series);
+        
+        // Style the series
+        if (!series.getData().isEmpty()) {
+            series.getNode().setStyle("-fx-stroke: #ff6b35; -fx-stroke-width: 3px;");
+        }
+        
+        return lineChart;
+    }
+    
+    /**
+     * Format date string for chart display
+     */
+    private static String formatDateForChart(String dateStr) {
+        try {
+            LocalDate date = LocalDate.parse(dateStr);
+            return date.format(DateTimeFormatter.ofPattern("MMM yyyy"));
+        } catch (Exception e) {
+            return dateStr;
         }
     }
 }

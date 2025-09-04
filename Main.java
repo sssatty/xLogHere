@@ -856,36 +856,6 @@ public class Main {
           Label typeBadge = new Label(type.toUpperCase());
           typeBadge.getStyleClass().addAll("type-badge", "type-" + type);
 
-          // NEW: Edit (GUI) button
-          Button editBtn = new Button("Edit");
-          editBtn.getStyleClass().addAll("btn","btn-secondary");
-          editBtn.setOnAction(ev -> {
-            editBtn.setDisable(true);
-            // show GUI editor (does its own DB work on a background thread)
-            showEditTaskDialog(editBtn.getScene().getWindow(), name);
-            // after dialog closes, refresh
-            refreshTasks();
-            editBtn.setDisable(false);
-          });
-
-          // NEW: Delete button (integrates existing deleteTask logic)
-          Button delBtn = new Button("Delete");
-          delBtn.getStyleClass().addAll("btn","btn-danger");
-          delBtn.setOnAction(ev -> {
-            // confirm first
-            if (confirmDelete(delBtn.getScene().getWindow(), name)) {
-              delBtn.setDisable(true);
-              new Thread(() -> {
-                try {
-                  deleteTask(name); // uses existing core delete logic
-                } catch (Exception ex) {
-                  ex.printStackTrace();
-                }
-                Platform.runLater(this::refreshTasks);
-                Platform.runLater(() -> delBtn.setDisable(false));
-              }).start();
-            }
-          });
 
           // complete button (unchanged)
           Button done = new Button("Complete");
@@ -901,7 +871,7 @@ public class Main {
             }).start();
           });
 
-          HBox rightCol = new HBox(10, typeBadge, editBtn, delBtn, done);
+          HBox rightCol = new HBox(10, typeBadge, done);
           rightCol.setAlignment(Pos.CENTER_RIGHT);
 
           Region spacer = new Region();
