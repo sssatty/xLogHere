@@ -365,7 +365,7 @@ public class ProfilePage {
         // Set the main content as center
         root.setCenter(mainContent);
 
-        Scene sc = new Scene(root, 600, 500);
+        Scene sc = new Scene(root, 1000, 700);
         // apply profile.css if present
         applyCss(sc, "profile.css");
         d.setScene(sc);
@@ -581,7 +581,7 @@ public class ProfilePage {
         root.setCenter(domainsChartsSection);
         root.setBottom(buttonBox);
         
-        Scene scene = new Scene(root, 800, 400);
+        Scene scene = new Scene(root, 1000, 500);
         applyCss(scene, "profile.css");
         detailStage.setScene(scene);
         detailStage.showAndWait();
@@ -723,7 +723,7 @@ public class ProfilePage {
         
         mainContainer.getChildren().addAll(titleLabel, achievementsGrid, closeBtn);
         
-        Scene scene = new Scene(mainContainer, 600, 500);
+        Scene scene = new Scene(mainContainer, 800, 600);
         achievementsStage.setScene(scene);
         achievementsStage.show();
     }

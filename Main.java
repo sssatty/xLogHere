@@ -799,9 +799,13 @@ public class Main {
     @Override
     public void start(Stage primaryStage) {
       primaryStage.setTitle("xLog — Home");
+      
+      // Set full screen
+      primaryStage.setMaximized(true);
+      primaryStage.setFullScreen(false);
 
       BorderPane root = new BorderPane();
-      root.setPadding(new Insets(12));
+      root.setPadding(new Insets(20));
       root.getStyleClass().add("root");
 
       // Top bar: title + create task + view profile buttons
@@ -882,7 +886,7 @@ public class Main {
       scroll.getStyleClass().add("tasks-scroll");
       root.setCenter(scroll);
 
-      Scene scene = new Scene(root, 820, 520);
+      Scene scene = new Scene(root);
       // apply home.css if present (same folder)
       applyCss(scene, "home.css");
 
@@ -1466,7 +1470,7 @@ public class Main {
         }).start();
       });
 
-      Scene sc = new Scene(mainContainer, 700, 600);
+      Scene sc = new Scene(mainContainer, 800, 700);
       applyCss(sc, "create_task.css");
       d.setScene(sc);
       d.showAndWait();
@@ -1964,7 +1968,7 @@ public class Main {
         }).start();
       });
 
-      Scene sc = new Scene(mainContainer, 600, 500);
+      Scene sc = new Scene(mainContainer, 800, 700);
       applyCss(sc, "edit_task.css");
       d.setScene(sc);
       d.showAndWait();
@@ -2068,7 +2072,7 @@ public class Main {
       
       mainContainer.getChildren().addAll(titleLabel, rankSelection, leaderboardContent, closeBtn);
       
-      Scene scene = new Scene(mainContainer, 600, 500);
+      Scene scene = new Scene(mainContainer, 800, 600);
       leaderboardStage.setScene(scene);
       leaderboardStage.show();
     }
@@ -2260,7 +2264,7 @@ public class Main {
       
       container.getChildren().add(closeBtn);
       
-      Scene scene = new Scene(container, 450, 400);
+      Scene scene = new Scene(container, 600, 500);
       gifStage.setScene(scene);
       gifStage.show();
     }
@@ -2372,7 +2376,7 @@ public class Main {
       buttonBox.getChildren().add(closeBtn);
       root.setBottom(buttonBox);
 
-      Scene scene = new Scene(root, 900, 600);
+      Scene scene = new Scene(root, 1200, 800);
       applyCss(scene, "home.css");
       d.setScene(scene);
       d.showAndWait();

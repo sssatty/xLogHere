@@ -24,11 +24,11 @@
 
 /* Title */
 #home-title {
-  -fx-font-size: 24px;
+  -fx-font-size: 32px;
   -fx-font-weight: 700;
   -fx-text-fill: #f1f5f9;
   -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 6, 0.0, 0, 2);
-  -fx-padding: 4 8 4 8;
+  -fx-padding: 8 16 8 16;
 }
 
 /* Generic labels */
@@ -47,9 +47,9 @@
 .btn {
   -fx-cursor: hand;
   -fx-background-radius: 10;
-  -fx-padding: 10 16 10 16;
+  -fx-padding: 12 20 12 20;
   -fx-font-weight: 600;
-  -fx-font-size: 14px;
+  -fx-font-size: 16px;
   -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 6, 0.0, 0, 3);
   -fx-border-color: transparent;
   -fx-translate-z: 0;
@@ -126,8 +126,8 @@
   -fx-background-color: #252530;
   -fx-background-insets: 0;
   -fx-background-radius: 16;
-  -fx-padding: 16 20 16 20;
-  -fx-spacing: 16;
+  -fx-padding: 20 24 20 24;
+  -fx-spacing: 20;
   -fx-alignment: center-left;
   -fx-border-color: transparent;
   -fx-border-width: 0 0 0 4;
