@@ -195,6 +195,8 @@ public class ProfilePage {
         double frac = 0.0;
         int lvl = 0;
         String rank = "";
+        double nextRankXp = XP_MAX;
+        double progressToNext = 0.0;
         try {
             try (PreparedStatement ps = conn.prepareStatement("SELECT id,name FROM domains ORDER BY id");
                  ResultSet rs = ps.executeQuery()) {
@@ -217,6 +219,11 @@ public class ProfilePage {
             lvl = Math.min(8, Math.max(0, (int)lvlF));
             frac = (lvl < 8 ? lvlF - lvl : 1.0);
             rank = RANK_NAMES[lvl];
+            
+            // Calculate XP thresholds for current and next rank
+            double currentRankXp = (lvl == 0) ? 0 : Math.pow((lvl / 8.0), 2) * XP_MAX;
+            nextRankXp = (lvl >= 8) ? XP_MAX : Math.pow(((lvl + 1) / 8.0), 2) * XP_MAX;
+            progressToNext = (lvl >= 8) ? 1.0 : (profileXp - currentRankXp) / (nextRankXp - currentRankXp);
             
 
             try (PreparedStatement ps = conn.prepareStatement(
@@ -258,25 +265,33 @@ public class ProfilePage {
         xpLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: " + hex + "; -fx-font-weight: normal; -fx-font-style: italic;");
         xpLabel.setPadding(new Insets(0,0,6,0));
 
-        // XP bar (low focus) - enhanced styling
-        ProgressBar pb = new ProgressBar(frac);
-        pb.setPrefWidth(280);
+        // XP bar (blue fill only, no white outer casing)
+        ProgressBar pb = new ProgressBar(progressToNext);
+        pb.setPrefWidth(500);
         pb.setPrefHeight(16);
-        pb.setStyle("-fx-accent: " + hex + "; " +
-                   "-fx-background-color: #1a1a1a; " +
-                   "-fx-border-color: #333333; " +
-                   "-fx-border-width: 2px; " +
-                   "-fx-border-radius: 8px; " +
+        pb.setStyle("-fx-accent: #667EEA; " +
+                   "-fx-background-color: transparent; " +
                    "-fx-background-radius: 8px; " +
-                   "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 4, 0, 0, 1);");
-        pb.setPadding(new Insets(0,0,6,0));
+                   "-fx-border-radius: 8px; " +
+                   "-fx-border-color: transparent; " +
+                   "-fx-border-width: 0px;");
+        pb.setPadding(new Insets(0,0,4,0));
+        
+        // Minimal progress text
+        String progressText = (lvl >= 8) ? 
+            String.format("%.0f/%.0f", profileXp, XP_MAX) :
+            String.format("%.0f/%.0f", profileXp, nextRankXp);
+        Label progressLabel = new Label(progressText);
+        progressLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #9ca3af; -fx-font-weight: 400;");
+        progressLabel.setPadding(new Insets(4, 0, 6, 0));
+        
 
         // Days left (low focus) - larger
         Label timeLabel = new Label("Time left: " + daysLeft + " days");
         timeLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #bfc9d3; -fx-font-weight: normal; -fx-font-style: italic;");
         timeLabel.setPadding(new Insets(0,0,0,0));
 
-        userInfo.getChildren().addAll(rankLabel, userLabel, xpLabel, pb, timeLabel);
+        userInfo.getChildren().addAll(rankLabel, userLabel, xpLabel, pb, progressLabel, timeLabel);
         
         // Right side: Single spider chart with 4 domains as axes
         VBox spiderChartSection = createSingleDomainSpiderChart(conn);
