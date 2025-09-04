@@ -277,10 +277,14 @@ public class ProfilePage {
                    "-fx-border-width: 0px;");
         pb.setPadding(new Insets(0,0,4,0));
         
-        // Minimal progress text
-        String progressText = (lvl >= 8) ? 
-            String.format("%.0f/%.0f", profileXp, XP_MAX) :
-            String.format("%.0f/%.0f", profileXp, nextRankXp);
+        // Progress text showing points remaining until next rank
+        String progressText;
+        if (lvl >= 8) {
+            progressText = "Max rank achieved!";
+        } else {
+            double pointsRemaining = nextRankXp - profileXp;
+            progressText = String.format("%.0f until next rank!", pointsRemaining);
+        }
         Label progressLabel = new Label(progressText);
         progressLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #9ca3af; -fx-font-weight: 400;");
         progressLabel.setPadding(new Insets(4, 0, 6, 0));
