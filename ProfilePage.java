@@ -128,6 +128,7 @@ public class ProfilePage {
         double frac = (lvl < 8 ? lvlF - lvl : 1.0);
         String color = COLORS[lvl];
         String rank = RANK_NAMES[lvl];
+        
 
         String user = "";
         int daysLeft = 0;
@@ -212,6 +213,7 @@ public class ProfilePage {
             lvl = Math.min(8, Math.max(0, (int)lvlF));
             frac = (lvl < 8 ? lvlF - lvl : 1.0);
             rank = RANK_NAMES[lvl];
+            
 
             try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT name, CAST(julianday(date(created_at,'+4 years'))-julianday('now','localtime') AS INTEGER) FROM user WHERE id=1");

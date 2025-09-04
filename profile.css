@@ -14,7 +14,7 @@
     -fx-background-radius: 4px;
     -fx-padding: 8px 16px;
     -fx-font-size: 12px;
-    -fx-cursor: hand;
+  -fx-cursor: hand;
 }
 
 .btn:hover {

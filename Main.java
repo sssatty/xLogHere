@@ -25,7 +25,7 @@ public class Main {
   private static Connection conn = null;
   // Constants still needed by other parts of the application
   private static final double XP_MAX = 109500.0;
-  
+
   // ANSI styles (used by console functions - preserved)
   private static final String BOLD   = "\033[1m";
   private static final String ITALIC = "\033[3m";
@@ -741,12 +741,29 @@ public class Main {
         }).start();
       });
 
+      Button allTasksBtn = new Button("All Tasks");
+      allTasksBtn.getStyleClass().addAll("btn","btn-secondary");
+      allTasksBtn.setOnAction(e -> {
+        allTasksBtn.setDisable(true);
+        new Thread(() -> {
+          try {
+            Platform.runLater(() -> {
+              showAllTasksGui(allTasksBtn.getScene().getWindow());
+              allTasksBtn.setDisable(false);
+            });
+          } catch (Exception ex) {
+            ex.printStackTrace();
+            Platform.runLater(() -> allTasksBtn.setDisable(false));
+          }
+        }).start();
+      });
+
       HBox topBar = new HBox(10, title);
       HBox.setHgrow(title, Priority.ALWAYS);
       topBar.setAlignment(Pos.CENTER_LEFT);
       Region spacer = new Region();
       HBox.setHgrow(spacer, Priority.ALWAYS);
-      topBar.getChildren().addAll(spacer, createBtn, profileBtn);
+      topBar.getChildren().addAll(spacer, createBtn, allTasksBtn, profileBtn);
       root.setTop(topBar);
 
       // Center: scrollable list of tasks
@@ -1702,6 +1719,232 @@ public class Main {
      */
     private void showProfileGui(Window owner) {
       ProfilePage.showProfileGui(owner, conn);
+    }
+
+    /**
+     * All Tasks GUI — shows all tasks in a JavaFX window with edit/delete/add/search functionality
+     */
+    private void showAllTasksGui(Window owner) {
+      Stage d = new Stage();
+      d.initOwner(owner);
+      d.initModality(Modality.APPLICATION_MODAL);
+      d.setTitle("All Tasks");
+
+      BorderPane root = new BorderPane();
+      root.setPadding(new Insets(12));
+
+      // Tasks list - declare early for use in event handlers
+      VBox tasksList = new VBox(8);
+      tasksList.setPadding(new Insets(8));
+
+      // Search field - declare early for use in event handlers
+      TextField searchField = new TextField();
+      searchField.setPromptText("Search tasks...");
+      searchField.getStyleClass().add("fancy-text-field");
+      searchField.setPrefWidth(200);
+
+      // Header with title and add button
+      HBox header = new HBox(12);
+      header.setAlignment(Pos.CENTER_LEFT);
+      
+      Label title = new Label("All Tasks");
+      title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+      
+      Button addTaskBtn = new Button("Add Task");
+      addTaskBtn.getStyleClass().addAll("btn","btn-primary");
+      addTaskBtn.setOnAction(ev -> {
+        showCreateTaskDialog(d);
+        refreshAllTasksList(tasksList, searchField); // refresh after adding
+      });
+      
+      header.getChildren().addAll(title, addTaskBtn);
+
+      // Search bar
+      HBox searchBar = new HBox(8);
+      searchBar.setAlignment(Pos.CENTER_LEFT);
+      searchBar.setPadding(new Insets(8, 0, 8, 0));
+      
+      Label searchLabel = new Label("Search:");
+      searchLabel.setStyle("-fx-text-fill: #bfc9d3;");
+      
+      Button clearSearchBtn = new Button("Clear");
+      clearSearchBtn.getStyleClass().addAll("btn","btn-secondary");
+      clearSearchBtn.setOnAction(ev -> {
+        searchField.clear();
+        refreshAllTasksList(tasksList, searchField);
+      });
+      
+      searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+        refreshAllTasksList(tasksList, searchField);
+      });
+      
+      searchBar.getChildren().addAll(searchLabel, searchField, clearSearchBtn);
+      
+      VBox topSection = new VBox(8);
+      topSection.getChildren().addAll(header, searchBar);
+      root.setTop(topSection);
+
+      // Initial load
+      refreshAllTasksList(tasksList, searchField);
+
+      // Scrollable content
+      ScrollPane scroll = new ScrollPane(tasksList);
+      scroll.setFitToWidth(true);
+      scroll.getStyleClass().add("tasks-scroll");
+      root.setCenter(scroll);
+
+      // Close button
+      Button closeBtn = new Button("Close");
+      closeBtn.getStyleClass().addAll("btn","btn-secondary");
+      closeBtn.setOnAction(ev -> d.close());
+      
+      HBox buttonBox = new HBox();
+      buttonBox.setAlignment(Pos.CENTER_RIGHT);
+      buttonBox.getChildren().add(closeBtn);
+      root.setBottom(buttonBox);
+
+      Scene scene = new Scene(root, 900, 600);
+      applyCss(scene, "home.css");
+      d.setScene(scene);
+      d.showAndWait();
+    }
+
+    /**
+     * Refresh the tasks list with optional search filtering
+     */
+    private void refreshAllTasksList(VBox tasksList, TextField searchField) {
+      tasksList.getChildren().clear();
+      String searchTerm = searchField.getText().toLowerCase().trim();
+      
+      try (PreparedStatement ps = conn.prepareStatement(
+        "SELECT id, name, type, frequency, last_done, streak, active FROM tasks ORDER BY id");
+           ResultSet rs = ps.executeQuery()) {
+        
+        while (rs.next()) {
+          int id = rs.getInt(1);
+          String name = rs.getString(2);
+          String type = rs.getString(3);
+          int freq = rs.getInt(4);
+          String lastDone = rs.getString(5);
+          int streak = rs.getInt(6);
+          int active = rs.getInt(7);
+
+          // Filter by search term
+          if (!searchTerm.isEmpty() && !name.toLowerCase().contains(searchTerm) && 
+              !type.toLowerCase().contains(searchTerm)) {
+            continue;
+          }
+
+          HBox taskRow = new HBox(12);
+          taskRow.getStyleClass().add("task-row");
+          taskRow.setAlignment(Pos.CENTER_LEFT);
+          taskRow.setPadding(new Insets(8));
+
+          // Task name
+          Label nameLabel = new Label(name);
+          nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+          nameLabel.setMinWidth(150);
+
+          // Type badge
+          Label typeBadge = new Label(type.toUpperCase());
+          typeBadge.getStyleClass().addAll("type-badge", "type-" + type);
+          typeBadge.setMinWidth(80);
+
+          // Frequency
+          Label freqLabel = new Label("Freq: " + (freq == 0 ? "One-time" : freq + " days"));
+          freqLabel.setStyle("-fx-text-fill: #bfc9d3; -fx-font-size: 12px;");
+          freqLabel.setMinWidth(100);
+
+          // Last done
+          String lastDoneText = lastDone == null ? "Never" : lastDone;
+          Label lastDoneLabel = new Label("Last: " + lastDoneText);
+          lastDoneLabel.setStyle("-fx-text-fill: #bfc9d3; -fx-font-size: 12px;");
+          lastDoneLabel.setMinWidth(120);
+
+          // Streak
+          Label streakLabel = new Label(streak > 0 ? "🔥 " + streak : "—");
+          streakLabel.getStyleClass().add("streak-badge");
+          streakLabel.setMinWidth(60);
+
+          // Status
+          Label statusLabel = new Label(active == 1 ? "ENABLED" : "DISABLED");
+          statusLabel.setStyle(active == 1 ? 
+            "-fx-text-fill: #2ecc71; -fx-font-weight: bold;" : 
+            "-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+          statusLabel.setMinWidth(80);
+
+          // Action buttons
+          Button editBtn = new Button("Edit");
+          editBtn.getStyleClass().addAll("btn","btn-secondary");
+          editBtn.setPrefWidth(60);
+          editBtn.setOnAction(ev -> {
+            editBtn.setDisable(true);
+            showEditTaskDialog(editBtn.getScene().getWindow(), name);
+            refreshAllTasksList(tasksList, searchField); // refresh after editing
+            editBtn.setDisable(false);
+          });
+
+          Button deleteBtn = new Button("Delete");
+          deleteBtn.getStyleClass().addAll("btn","btn-danger");
+          deleteBtn.setPrefWidth(70);
+          deleteBtn.setOnAction(ev -> {
+            if (confirmDelete(deleteBtn.getScene().getWindow(), name)) {
+              deleteBtn.setDisable(true);
+              new Thread(() -> {
+                try {
+                  deleteTask(name);
+                } catch (Exception ex) {
+                  ex.printStackTrace();
+                }
+                Platform.runLater(() -> {
+                  refreshAllTasksList(tasksList, searchField);
+                  deleteBtn.setDisable(false);
+                });
+              }).start();
+            }
+          });
+
+          // Toggle active/inactive button
+          Button toggleBtn = new Button(active == 1 ? "Disable" : "Enable");
+          toggleBtn.getStyleClass().addAll("btn", active == 1 ? "btn-warning" : "btn-success");
+          toggleBtn.setPrefWidth(70);
+          toggleBtn.setOnAction(ev -> {
+            toggleBtn.setDisable(true);
+            new Thread(() -> {
+              try {
+                if (active == 1) {
+                  disableTask(name);
+                } else {
+                  enableTask(name);
+                }
+              } catch (Exception ex) {
+                ex.printStackTrace();
+              }
+              Platform.runLater(() -> {
+                refreshAllTasksList(tasksList, searchField);
+                toggleBtn.setDisable(false);
+              });
+            }).start();
+          });
+
+          taskRow.getChildren().addAll(nameLabel, typeBadge, freqLabel, lastDoneLabel, 
+                                     streakLabel, statusLabel, editBtn, deleteBtn, toggleBtn);
+          tasksList.getChildren().add(taskRow);
+        }
+        
+        if (tasksList.getChildren().isEmpty()) {
+          Label noTasksLabel = new Label(searchTerm.isEmpty() ? "No tasks found." : "No tasks match your search.");
+          noTasksLabel.setStyle("-fx-text-fill: #bfc9d3; -fx-font-size: 14px;");
+          noTasksLabel.setPadding(new Insets(20));
+          tasksList.getChildren().add(noTasksLabel);
+        }
+        
+      } catch (SQLException ex) {
+        ex.printStackTrace();
+        Label errorLabel = new Label("Failed to load tasks. See console for error.");
+        errorLabel.setStyle("-fx-text-fill: #e74c3c;");
+        tasksList.getChildren().add(errorLabel);
+      }
     }
 
   } // end GuiApp
