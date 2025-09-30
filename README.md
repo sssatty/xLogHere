@@ -2,7 +2,7 @@
 
 ## Introduction
 
-**xLog** is a command-line–based task management tool that turns everyday responsibilities into an immersive, RPG-style progression system. Your life is divided into **four domains**, each comprised of **four distinct elements**, allowing precise tracking of personal growth. Completing tasks awards XP to both a **major** and a **minor** element, offering clear visibility into how you develop habits and skills over time.
+**xLog** is a task management tool that turns everyday responsibilities into an immersive, RPG-style progression system. Your life is divided into **four domains**, each comprised of **four distinct elements**, allowing precise tracking of personal growth. Completing tasks awards XP to both a **major** and a **minor** element, offering clear visibility into how you develop habits and skills over time.
 
 Embodying the spirit of **solo leveling**, xLog emphasizes that the greatest challenge is overcoming your own limits—it’s finally **you vs. you**.
 
@@ -20,9 +20,11 @@ Embodying the spirit of **solo leveling**, xLog emphasizes that the greatest cha
 
 ### Prerequisites
 
-- C++17–compatible compiler (e.g., GCC, Clang)
-- SQLite3 development library and headers
-- CMake or Make for build automation
+- JDK 21 or later
+- JavaFX 21 (if not using Gradle/Maven to fetch automatically)
+- SQLite JDBC driver (downloaded automatically if you use Gradle/Maven)
+- (Optional) Gradle or Maven for build automation
+
 
 ### Installation
 
